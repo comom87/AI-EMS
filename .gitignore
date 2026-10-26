@@ -1,0 +1,23 @@
+# 비밀번호와 서버별 설정
+.env
+
+# 다시 만들 수 있는 파일
+.venv/
+__pycache__/
+*.pyc
+
+# 데이터 파일과 실행 결과 (git이 아니라 DB, MLflow, 디스크에 보관)
+# data/는 데이터 설명·처리 코드를 올리고, 실제 데이터 파일은 data/<소스>/files/에만 두어 뺌
+data/*/files/
+mlruns/
+mlartifacts/
+mlflow.db
+work/
+
+# Slurm 학습 이미지와 작업 로그 (작업 기록은 PostgreSQL common 스키마에 있음)
+infra/slurm/sif/
+infra/slurm/logs/
+
+# Feast가 적용·반영할 때 만드는 파일 (등록 정보)
+infra/feast/registry.db
+infra/feast/data/

@@ -1,0 +1,29 @@
+# 최적 조류 예측 기능의 모델 명세. 학습·평가·서빙 코드는 위 폴더(sources/optimal_power_flow/), 학습 설정은 옆의 configs/
+name: kpg193_realtime
+owner: comom87
+description: KPG193 계통의 실시간 시나리오로 최적 조류(OPF)를 예측하는 gridfm-graphkit GNN 모델
+data_source: kpg193
+
+training:
+  image: aiems-graphkit                # 공용 graphkit 학습 이미지 (infra/docker/graphkit)
+  config: sources/optimal_power_flow/models/configs/kpg193.yaml
+  data_dir: data/kpg193/files             # 실시간 데이터를 학습용 parquet로 내보내는 폴더. graphkit 형식이라 files/<계통>/raw/ 아래에 생김 (git 제외)
+  schedule: "@monthly"
+  retries: 3
+  cooldown_days: 7
+
+evaluation:
+  metric: test/KPG193_ver2_0/rmse_pg_generators_mw   # 발전기 유효전력 RMSE (MW). champion 교체와 성능 기준선에 사용
+  lower_is_better: true
+
+monitoring:
+  metric_column: pg_rmse_mw
+  aggregation: pooled_rmse
+  window: 96                           # 15분 주기로 하루치
+  tolerance: 0.2
+
+drift:
+  window: 96
+  psi_threshold: 0.25
+  out_of_range_threshold: 0.01
+  retrain_on: [out_of_range]

@@ -1,0 +1,9 @@
+# infra/grafana/dashboards/*.json을 읽어 AI-EMS 폴더에 올림. 화면에서 고친 내용은 저장되지 않으니 JSON 파일을 고침
+apiVersion: 1
+providers:
+  - name: aiems
+    folder: AI-EMS
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards

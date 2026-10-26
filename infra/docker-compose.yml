@@ -1,0 +1,164 @@
+# AI-EMS 서비스 정의. 경로는 이 파일(infra/) 기준입니다.
+# ${...} 값은 infra/.env(저장소 루트 .env를 가리키는 링크)에서 읽습니다.
+# 실행 예: docker compose -f infra/docker-compose.yml up -d   (postgres, redis, mlflow, airflow, serving, grafana)
+name: aiems
+
+services:
+  # ai-ems 전용 PostgreSQL. 내부망 전체에서 접속할 수 있음 (비밀번호 필요)
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${AIEMS_DB_USER}
+      POSTGRES_PASSWORD: ${AIEMS_DB_PASSWORD}
+      POSTGRES_DB: ${AIEMS_DB_NAME}
+    ports:
+      - "${AIEMS_DB_PORT}:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      # 볼륨이 비어 있는 첫 실행 때만 db/*.sql(플랫폼 SQL)을 이름순으로 실행함 (파일끼리 서로 기대지 않아 순서는 상관없음).
+      # 데이터 소스·모델의 schema.sql은 각자의 DAG가 시작할 때 적용함
+      # 이후 바뀐 SQL은 직접 적용해야 함
+      - ../db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AIEMS_DB_USER} -d ${AIEMS_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Feast 온라인 저장소. 비밀번호가 없어서 서버 안에서만 접속할 수 있게 둠
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${AIEMS_REDIS_PORT}:6379"
+    volumes:
+      - redis:/data
+
+  # 실험·모델 기록. 기록은 postgres의 mlflow 데이터베이스, 모델 파일은 mlartifacts 볼륨에 저장
+  mlflow:
+    build:
+      context: ./docker/mlflow
+    image: aiems-mlflow
+    restart: unless-stopped
+    command: >
+      mlflow server
+      --backend-store-uri ${AIEMS_MLFLOW_BACKEND_URI}
+      --artifacts-destination /mlartifacts
+      --host 0.0.0.0
+      --port 5000
+      --cors-allowed-origins ${AIEMS_MLFLOW_CORS_ORIGIN}
+    ports:
+      - "${AIEMS_MLFLOW_PORT}:5000"
+    volumes:
+      - mlartifacts:/mlartifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Airflow (스케줄러 + 웹 화면). Slurm 명령(sbatch, sacct)을 쓰므로 호스트 네트워크와 munge를 그대로 씀
+  airflow:
+    build:
+      context: ./docker/airflow
+    image: aiems-airflow
+    restart: unless-stopped
+    network_mode: host
+    user: "${AIEMS_UID}:0"
+    env_file: .env
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__DAGS_FOLDER: ${AIEMS_PROJECT_ROOT}/dags
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIEMS_AIRFLOW_DATABASE_URL}
+      AIRFLOW__WEBSERVER__WEB_SERVER_PORT: ${AIEMS_AIRFLOW_PORT}
+      # 기본 로그 포트(8793, 8794)는 opengridfm-mlops의 Airflow가 쓰고 있어서 피함
+      AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT: "8795"
+      AIRFLOW__LOGGING__TRIGGER_LOG_SERVER_PORT: "8796"
+      PYTHONPATH: ${AIEMS_PROJECT_ROOT}
+      # 이 Airflow가 제출한 Slurm 작업은 작업 기록에 submitted_by = airflow로 남음
+      USER: airflow
+    volumes:
+      - airflow:/opt/airflow
+      # Slurm 작업 스크립트가 호스트 경로를 쓰므로 저장소를 같은 경로로 연결
+      - ${AIEMS_PROJECT_ROOT}:${AIEMS_PROJECT_ROOT}
+      - /run/munge:/run/munge
+      - /etc/slurm/slurm.conf:/etc/slurm/slurm.conf:ro
+    command: bash -c "rm -f /opt/airflow/*.pid && exec airflow standalone"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 서빙 (serving/app.py). 프로세스 하나가 predictor.py가 있는 모든 모델을 서빙함: POST /models/<모델>/predict
+  # Airflow의 <모델>_predict DAG가 부름. 모델 계산 스레드 수는 .env의 AIEMS_SERVING_CPUS
+  serving:
+    build:
+      context: ./docker/serving
+    image: aiems-serving
+    restart: unless-stopped
+    network_mode: host
+    user: "${AIEMS_UID}:0"
+    env_file: .env
+    environment:
+      OMP_NUM_THREADS: ${AIEMS_SERVING_CPUS}
+      MKL_NUM_THREADS: ${AIEMS_SERVING_CPUS}
+      PYTHONPATH: ${AIEMS_PROJECT_ROOT}
+      MPLCONFIGDIR: /tmp
+      HOME: /tmp
+      # 컨테이너에는 uid 2007의 계정이 없어서, torch가 사용자 이름을 찾을 때 이 값을 씀
+      USER: serving
+    working_dir: ${AIEMS_PROJECT_ROOT}
+    volumes:
+      - ${AIEMS_PROJECT_ROOT}:${AIEMS_PROJECT_ROOT}
+    entrypoint: []
+    command: python3 -m serving.app
+    depends_on:
+      - mlflow
+      - redis
+
+  # 대시보드 (infra/grafana). 관리자 비밀번호는 .env의 AIEMS_GRAFANA_PASSWORD
+  # PostgreSQL 데이터 소스 플러그인은 grafana-data 볼륨의 plugins/에 있어야 함 (없으면 처음 뜰 때 내려받음)
+  grafana:
+    image: grafana/grafana:13.2.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${AIEMS_GRAFANA_PASSWORD}
+      GF_PLUGINS_PREINSTALL_SYNC: grafana-postgresql-datasource
+      AIEMS_DB_USER: ${AIEMS_DB_USER}
+      AIEMS_DB_PASSWORD: ${AIEMS_DB_PASSWORD}
+      AIEMS_DB_NAME: ${AIEMS_DB_NAME}
+    ports:
+      - "${AIEMS_GRAFANA_PORT}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 공용 학습 이미지 (graphkit으로 학습하는 모델이 함께 씀). 빌드 전용이라 run/up으로 띄우지 않음
+  # Slurm은 Apptainer 이미지로 실행하므로 빌드 뒤 infra/slurm/sif/aiems-graphkit.sif로 변환해야 함
+  graphkit:
+    build:
+      context: ./docker/graphkit
+    image: aiems-graphkit
+    profiles: [build]
+
+  # 시나리오 생성·검증·통계용 도구 (data/<소스>/handler/datakit.py가 실행). 상시 서비스가 아니라 run으로만 씀
+  datakit:
+    build:
+      context: ./docker/datakit
+    image: aiems-datakit
+    profiles: [tools]
+    working_dir: /workspace
+    volumes:
+      # 설정 파일의 data_dir("./data/<소스>/files/<이름>")이 호스트의 data/<소스>/files/<이름>에 저장되도록 연결
+      # 설정 폴더(/workspace/configs)는 실행할 때 소스마다 연결함 (data/<소스>/handler/datakit.py)
+      - ../data:/workspace/data
+
+volumes:
+  postgres:
+  redis:
+  mlartifacts:
+  airflow:
+  grafana-data:

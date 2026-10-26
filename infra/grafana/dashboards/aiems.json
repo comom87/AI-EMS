@@ -1,0 +1,1860 @@
+{
+  "uid": "aiems-mlops",
+  "title": "AI-EMS MLOps",
+  "timezone": "browser",
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "현재 상태",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "title": "Champion 모델",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "mlflow-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "mlflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT 'v' || version FROM registered_model_aliases WHERE name = 'kpg193_realtime' AND alias = 'champion'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Champion 시험 RMSE",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "mlflow-postgres"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "mlflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT lm.value FROM registered_model_aliases a\nJOIN model_version_tags t ON t.name = a.name AND t.version = a.version AND t.key = 'validation.eval_run_id'\nJOIN latest_metrics lm ON lm.run_uuid = t.value AND lm.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE a.name = 'kpg193_realtime' AND a.alias = 'champion'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "unit": "MW"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "최근 서빙 RMSE",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT pg_rmse_mw FROM kpg193_realtime.prediction_metrics ORDER BY predicted_at DESC LIMIT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "unit": "MW"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "realtime 시나리오 수",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT COUNT(DISTINCT scenario) FROM kpg193.bus_realtime"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "성능 점검",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT COALESCE((SELECT CASE WHEN degraded THEN '저하' ELSE '정상' END FROM common.model_performance_checks WHERE model_name = 'kpg193_realtime' ORDER BY checked_at DESC LIMIT 1), '점검 전')"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "분포 점검",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT COALESCE((SELECT status FROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' ORDER BY checked_at DESC LIMIT 1), '점검 전')"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "마지막 학습 파이프라인",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "airflow-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT to_char(start_date AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') || ' · ' || state FROM dag_run\nWHERE dag_id = 'kpg193_realtime_training' AND run_type <> 'backfill' AND start_date IS NOT NULL ORDER BY start_date DESC LIMIT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "재학습 가능 시점",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "airflow-postgres"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT to_char((MAX(start_date) + interval '7 days') AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI')\nFROM dag_run WHERE dag_id = 'kpg193_realtime_training'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      },
+      "description": "마지막 학습 파이프라인 실행 후 7일 동안은 자동 재학습을 하지 않습니다."
+    },
+    {
+      "id": 10,
+      "title": "실행 중인 Slurm job",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM common.slurm_jobs WHERE finished_at IS NULL"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "서빙 마지막 요청",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT to_char(MAX(requested_at) AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') FROM kpg193_realtime.prediction_requests"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "24시간 예측 요청",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM kpg193_realtime.prediction_requests WHERE requested_at > now() - interval '24 hours'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "24시간 실패 파이프라인",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "airflow-postgres"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM dag_run WHERE state = 'failed' AND start_date > now() - interval '24 hours'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "text": {
+          "valueSize": 22
+        },
+        "wideLayout": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "데이터 검증",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 15,
+      "title": "datakit 데이터 검증 결과",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "airflow-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT start_date AS \"시각\", state AS \"결과\", round(duration::numeric, 1) AS \"소요(초)\", run_id\nFROM task_instance WHERE dag_id = 'kpg193_realtime_training' AND task_id = 'validate_dataset' AND start_date IS NOT NULL\nORDER BY start_date DESC LIMIT 30"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 16,
+      "title": "realtime 데이터 누적",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT event_timestamp AS time, scenario + 1 AS \"누적 시나리오\"\nFROM kpg193.runtime_realtime WHERE $__timeFilter(event_timestamp) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 17,
+      "title": "계통 총 부하",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT MIN(event_timestamp) AS time, SUM(\"Pd\") AS \"들어온 데이터\"\nFROM kpg193.bus_realtime WHERE $__timeFilter(event_timestamp) GROUP BY scenario ORDER BY 1"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT checked_at AS time, (measures->>'reference_total_pd_min')::float AS \"학습 범위 최소\", (measures->>'reference_total_pd_max')::float AS \"학습 범위 최대\"\nFROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' AND measures ? 'reference_total_pd_min' ORDER BY checked_at DESC LIMIT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          },
+          "unit": "MW"
+        },
+        "overrides": []
+      },
+      "options": {},
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "B",
+            "applyTo": {
+              "id": "byName",
+              "options": "들어온 데이터"
+            },
+            "mappings": [
+              {
+                "fieldName": "학습 범위 최소",
+                "handlerKey": "threshold1",
+                "reducerId": "lastNotNull",
+                "handlerArguments": {
+                  "threshold": {
+                    "color": "green"
+                  }
+                }
+              },
+              {
+                "fieldName": "학습 범위 최대",
+                "handlerKey": "threshold1",
+                "reducerId": "lastNotNull",
+                "handlerArguments": {
+                  "threshold": {
+                    "color": "red"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "description": "realtime에 들어온 시나리오마다 계통 전체 유효부하(버스 Pd 합)입니다. 초록 영역은 현재 champion이 학습한 데이터의 총 부하 범위이고, 빨간 영역은 그 범위를 벗어난 구간입니다."
+    },
+    {
+      "id": 18,
+      "title": "분포 점검: 학습 범위 밖 비율",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT checked_at AS time, (measures->>'out_of_range_ratio')::float * 100 AS \"범위 밖 비율\"\nFROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            },
+            "axisSoftMax": 3,
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          },
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {},
+      "description": "최근 96개 시나리오의 버스별 부하 중 champion 학습 데이터 범위를 벗어난 값의 비율입니다. 재학습 기준은 1%이고, 넘으면 자동 재학습이 걸립니다."
+    },
+    {
+      "id": 19,
+      "title": "분포 점검: PSI",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT checked_at AS time, (measures->>'total_pd_psi')::float AS \"총 유효부하\", (measures->>'total_qd_psi')::float AS \"총 무효부하\",\n(measures->>'branch_outages_psi')::float AS \"탈락 선로 수\", (measures->>'gen_outages_psi')::float AS \"정지 발전기 수\", (measures->>'max_bus_pd_psi')::float AS \"버스별 부하 (최대)\"\nFROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            },
+            "scaleDistribution": {
+              "type": "log",
+              "log": 10
+            },
+            "axisSoftMin": 0.01,
+            "showPoints": "always",
+            "spanNulls": false,
+            "lineWidth": 2,
+            "insertNulls": 1800000
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "총 유효부하"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "총 무효부하"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    12,
+                    6
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "버스별 부하 (최대)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    3,
+                    6
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "탈락 선로 수"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "정지 발전기 수"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "description": "최근 96개 시나리오와 champion 학습 데이터의 분포 차이(PSI)입니다. 참고용 지표로, 0.25 이상이면 분포가 크게 달라졌다는 뜻입니다. 재학습 판단에는 쓰지 않습니다. 총 유효부하·총 무효부하·버스별 부하는 함께 움직여서 선이 겹칠 수 있으니 오른쪽 표의 값을 함께 보세요."
+    },
+    {
+      "id": 20,
+      "title": "학습 run별 데이터 분포 기록",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "mlflow-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 24,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "mlflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT r.name AS \"학습 run\", to_timestamp(r.start_time / 1000) AS \"시작\",\nMAX(CASE WHEN t.key = 'aiems.drift_status' THEN t.value END) AS \"판정\",\nMAX(CASE WHEN m.key = 'drift/out_of_range_ratio' THEN m.value END) AS \"범위 밖 비율\",\nMAX(CASE WHEN m.key = 'drift/total_pd_psi' THEN m.value END) AS \"총 부하 PSI\",\nMAX(CASE WHEN m.key = 'drift/max_bus_pd_psi' THEN m.value END) AS \"버스 부하 PSI (최대)\"\nFROM runs r JOIN experiments e ON e.experiment_id = r.experiment_id AND e.name = 'kpg193_realtime'\nJOIN latest_metrics m ON m.run_uuid = r.run_uuid AND m.key LIKE 'drift/%'\nLEFT JOIN tags t ON t.run_uuid = r.run_uuid\nWHERE r.lifecycle_stage = 'active' GROUP BY r.run_uuid, r.name, r.start_time ORDER BY r.start_time DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "description": "새 모델을 학습할 때마다, 이번에 쓴 학습 데이터가 지금 쓰고 있는 모델(champion)이 배운 데이터와 얼마나 다른지를 한 줄씩 남긴 표입니다. 차이가 크면 새 모델은 champion이 본 적 없는 상황까지 배운 것입니다. 첫 학습 때는 비교할 모델이 없어서 기록이 없습니다."
+    },
+    {
+      "id": 21,
+      "type": "row",
+      "title": "모델 학습",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 53,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 22,
+      "title": "학습 실행 기록",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "mlflow-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 54,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "mlflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT r.name AS \"학습 run\", to_timestamp(r.start_time / 1000) AS \"시작\",\nround((r.end_time - r.start_time) / 60000.0, 1) AS \"소요(분)\", r.status AS \"상태\",\nMAX(CASE WHEN t.key = 'kpg193.data_dir' THEN t.value END) AS \"데이터\",\nMAX(CASE WHEN t.key = 'kpg193.KPG193_ver2_0.scenario_count' THEN t.value END) AS \"시나리오 수\",\nMAX(CASE WHEN t.key = 'aiems.model_version' THEN 'v' || t.value END) AS \"등록 버전\",\nMAX(CASE WHEN t.key = 'aiems.promoted' THEN t.value END) AS \"승격\",\nMAX(em.value) AS \"평가 RMSE (MW)\"\nFROM runs r JOIN experiments e ON e.experiment_id = r.experiment_id AND e.name = 'kpg193_realtime'\nLEFT JOIN tags t ON t.run_uuid = r.run_uuid\nLEFT JOIN runs ev ON ev.name = r.name || '_eval' AND ev.experiment_id = r.experiment_id\nLEFT JOIN latest_metrics em ON em.run_uuid = ev.run_uuid AND em.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE r.lifecycle_stage = 'active' AND r.name NOT LIKE '%\\_eval' ESCAPE '\\'\nGROUP BY r.run_uuid, r.name, r.start_time, r.end_time, r.status ORDER BY r.start_time DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "description": "MLflow에 기록된 학습 run 목록입니다. 평가 RMSE는 같은 이름의 _eval run에서 가져옵니다."
+    },
+    {
+      "id": 23,
+      "title": "Slurm job 자원 요약",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT a.job_id, a.job_label AS \"job\", a.submitted_at AS \"제출\",\nround((EXTRACT(EPOCH FROM COALESCE(a.finished_at, now()) - MIN(s.sampled_at)) + 5)::numeric / 60.0, 1) AS \"소요(분)\", COALESCE(a.state, 'RUNNING') AS \"상태\",\na.alloc_cpus AS \"CPU 할당\", round(AVG(s.cpu_cores)::numeric, 2) AS \"CPU 평균\", round(MAX(s.cpu_cores)::numeric, 2) AS \"CPU 최대\",\na.alloc_cpu_mem_gb AS \"메모리 할당(GB)\", round((MAX(s.cpu_mem_mb) / 1024)::numeric, 2) AS \"메모리 최대(GB)\",\na.alloc_mps_percent AS \"SM 할당(%)\", round((AVG(s.sm_active) * 100)::numeric, 1) AS \"SM 평균(%)\", round((MAX(s.sm_active) * 100)::numeric, 1) AS \"SM 최대(%)\",\nround(a.alloc_gpu_mem_gb::numeric, 1) AS \"GPU 메모리 한도(GB)\", round((MAX(s.gpu_mem_mb) / 1024)::numeric, 2) AS \"GPU 메모리 최대(GB)\",\nEXTRACT(EPOCH FROM MIN(s.sampled_at)) * 1000 - 60000 AS start_ms, EXTRACT(EPOCH FROM COALESCE(a.finished_at, now())) * 1000 + 60000 AS end_ms\nFROM common.slurm_jobs a LEFT JOIN common.slurm_job_usage s USING (job_id)\nWHERE a.job_label NOT LIKE '%\\_eval' ESCAPE '\\'\nGROUP BY a.job_id ORDER BY a.submitted_at DESC LIMIT 50"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "job_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "이 job 자원 사용 보기",
+                    "url": "/d/aiems-mlops/aiems-mlops?var-job=${__data.fields.job_id}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "start_ms"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "end_ms"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "options": {},
+      "description": "학습(train) job마다 할당량과 실제 사용량(평균·최대)입니다. 평가(eval) job은 제외합니다. job_id를 누르면 아래 그래프 4개가 그 job으로 바뀝니다. 위쪽 '학습 job' 선택 칸으로 골라도 되고, '기본'을 고르면 가장 최근 학습 job을 보여 줍니다. 10월 7일 측정 방식 변경 전 job은 CPU 측정값이 없습니다."
+    },
+    {
+      "id": 24,
+      "title": "CPU 사용 코어",
+      "type": "trend",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 69,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT EXTRACT(EPOCH FROM s.sampled_at) * 1000 AS \"시각\", s.cpu_cores AS \"사용\", a.alloc_cpus AS \"할당\"\nFROM common.slurm_job_usage s JOIN common.slurm_jobs a USING (job_id)\nWHERE s.job_id = COALESCE(NULLIF('$job', 'latest')::bigint, (\n    SELECT job_id FROM common.slurm_jobs WHERE job_label NOT LIKE '%\\_eval' ESCAPE '\\' ORDER BY submitted_at DESC LIMIT 1\n)) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "시각"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocalNoDateIfToday"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "시각",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "description": "선택한 job($job)의 5초 간격 CPU 사용 코어 수(cgroup cpu.stat)와 할당 코어 수입니다. 대시보드 시간 범위와 상관없이 job 실행 구간 전체를 시각으로 보여 줍니다."
+    },
+    {
+      "id": 25,
+      "title": "CPU 메모리",
+      "type": "trend",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 69,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT EXTRACT(EPOCH FROM s.sampled_at) * 1000 AS \"시각\", s.cpu_mem_mb / 1024.0 AS \"사용\", a.alloc_cpu_mem_gb AS \"할당\"\nFROM common.slurm_job_usage s JOIN common.slurm_jobs a USING (job_id)\nWHERE s.job_id = COALESCE(NULLIF('$job', 'latest')::bigint, (\n    SELECT job_id FROM common.slurm_jobs WHERE job_label NOT LIKE '%\\_eval' ESCAPE '\\' ORDER BY submitted_at DESC LIMIT 1\n)) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "unit": "decgbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "시각"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocalNoDateIfToday"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "시각",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "description": "선택한 job($job)의 CPU 메모리 사용량(cgroup memory.stat의 anon)과 할당량입니다. 대시보드 시간 범위와 상관없이 job 실행 구간 전체를 시각으로 보여 줍니다."
+    },
+    {
+      "id": 26,
+      "title": "GPU SM 사용률",
+      "type": "trend",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 77,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT EXTRACT(EPOCH FROM s.sampled_at) * 1000 AS \"시각\", s.sm_active * 100 AS \"사용\", a.alloc_mps_percent AS \"MPS 할당\"\nFROM common.slurm_job_usage s JOIN common.slurm_jobs a USING (job_id)\nWHERE s.job_id = COALESCE(NULLIF('$job', 'latest')::bigint, (\n    SELECT job_id FROM common.slurm_jobs WHERE job_label NOT LIKE '%\\_eval' ESCAPE '\\' ORDER BY submitted_at DESC LIMIT 1\n)) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "unit": "percent"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "시각"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocalNoDateIfToday"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "시각",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "description": "선택한 job($job)의 GPU SM 사용률(DCGM sm_active)과 MPS로 할당한 SM 비율입니다. 대시보드 시간 범위와 상관없이 job 실행 구간 전체를 시각으로 보여 줍니다."
+    },
+    {
+      "id": 27,
+      "title": "GPU 메모리",
+      "type": "trend",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 77,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT EXTRACT(EPOCH FROM s.sampled_at) * 1000 AS \"시각\", s.gpu_mem_mb / 1024.0 AS \"사용\", a.alloc_gpu_mem_gb AS \"MPS 한도\"\nFROM common.slurm_job_usage s JOIN common.slurm_jobs a USING (job_id)\nWHERE s.job_id = COALESCE(NULLIF('$job', 'latest')::bigint, (\n    SELECT job_id FROM common.slurm_jobs WHERE job_label NOT LIKE '%\\_eval' ESCAPE '\\' ORDER BY submitted_at DESC LIMIT 1\n)) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "unit": "decgbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "시각"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocalNoDateIfToday"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "시각",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "description": "선택한 job($job) 프로세스의 GPU 메모리 사용량(nvidia-smi)과 MPS 메모리 한도입니다. 대시보드 시간 범위와 상관없이 job 실행 구간 전체를 시각으로 보여 줍니다."
+    },
+    {
+      "id": 28,
+      "type": "row",
+      "title": "재학습",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 85,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 29,
+      "title": "성능 점검: 최근 하루 RMSE vs 재학습 조건선",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 86,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT checked_at AS time, recent_value AS \"최근 하루 RMSE\",\noffline_baseline * 1.2 AS \"재학습 조건선\", offline_baseline AS \"오프라인 평가 RMSE (참고)\"\nFROM common.model_performance_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "MW",
+          "custom": {
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "오프라인 평가 RMSE (참고)"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {},
+      "description": "champion의 최근 예측 96개(15분 간격 데이터 하루치)를 합친 발전량 RMSE를 재학습 조건선과 비교합니다. 재학습 조건선은 champion의 오프라인 평가 RMSE의 1.2배이고, 최근 하루 RMSE가 이 선을 넘으면 재학습을 요청합니다. 점선은 champion의 오프라인 평가 RMSE 원래 값으로, 판정에는 쓰지 않는 참고선입니다. champion의 예측이 96개 쌓이기 전에는 점검하지 않습니다."
+    },
+    {
+      "id": 30,
+      "title": "재학습 트리거 기록",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 94,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT requested_at AS \"시각\",\nreplace(replace(replace(replace(reason, 'performance_degradation', '성능 저하'), 'out_of_range', '학습 범위 밖 입력'), 'shifted', '입력 분포 변화'), ',', ', ') AS \"이유\"\nFROM common.model_retraining_requests WHERE model_name = 'kpg193_realtime' ORDER BY requested_at DESC LIMIT 30"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 31,
+      "title": "학습 파이프라인 실행 기록",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "airflow-postgres"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 94,
+        "w": 16,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT start_date AS \"시작\", end_date AS \"종료\",\nround(EXTRACT(EPOCH FROM (end_date - start_date)) / 60.0, 1) AS \"소요(분)\", state AS \"상태\",\nCASE\n    WHEN run_type = 'scheduled' THEN '자동 (월간 정기)'\n    WHEN run_id LIKE 'retrain\\_%' THEN '트리거 (점검 결과 재학습 요청)'\n    WHEN run_type = 'manual' THEN '수동'\n    WHEN run_type = 'backfill' THEN '건너뜀'\n    ELSE run_type\nEND AS \"실행 종류\", run_id\nFROM dag_run WHERE dag_id = 'kpg193_realtime_training' ORDER BY start_date DESC NULLS LAST LIMIT 30"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "description": "Airflow kpg193_realtime_training의 실행 기록입니다. 실행 종류는 자동(매월 정해진 날 실행), 트리거(데이터 분포 변화나 성능 저하로 자동 재학습), 수동(사람이 Airflow에서 직접 실행)으로 나뉩니다."
+    },
+    {
+      "id": 32,
+      "title": "모델 버전 판정 기록",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "mlflow-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 102,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "mlflow-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT 'v' || mv.version AS \"버전\", to_timestamp(mv.creation_time / 1000) AS \"등록\",\nCASE WHEN a.alias IS NOT NULL THEN 'champion' ELSE '' END AS \"현재\",\nMAX(CASE WHEN t.key = 'validation.decision' THEN t.value END) AS \"판정\",\nMAX(CASE WHEN t.key = 'validation.compared_champion_version' THEN t.value END) AS \"비교 대상\",\nMAX(em.value) AS \"평가 RMSE (MW)\",\nCASE\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) = 'passed all checks'\n         AND MAX(CASE WHEN t.key = 'validation.compared_champion_version' THEN t.value END) = 'none'\n        THEN '비교할 champion이 없어 바로 승격 (첫 모델)'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) = 'passed all checks'\n        THEN 'champion보다 발전량 RMSE가 작아 승격'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) LIKE '%champion evaluation failed%'\n        THEN 'champion 재평가가 실패해 승격하지 않음'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) LIKE '%not better than champion%'\n        THEN regexp_replace(MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END),\n             '^.*rmse_pg_generators_mw ([0-9.e+-]+) not better than champion ([0-9.e+-]+).*$',\n             'champion보다 발전량 RMSE가 작지 않음 (새 모델 \\1 MW, champion \\2 MW)')\n    ELSE MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END)\nEND AS \"사유\"\nFROM model_versions mv\nLEFT JOIN registered_model_aliases a ON a.name = mv.name AND a.version = mv.version AND a.alias = 'champion'\nLEFT JOIN model_version_tags t ON t.name = mv.name AND t.version = mv.version\nLEFT JOIN model_version_tags et ON et.name = mv.name AND et.version = mv.version AND et.key = 'validation.eval_run_id'\nLEFT JOIN latest_metrics em ON em.run_uuid = et.value AND em.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE mv.name = 'kpg193_realtime' GROUP BY mv.version, mv.creation_time, a.alias ORDER BY mv.version DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "description": "MLflow Model Registry에 등록된 모든 후보 모델과 승격 판정 결과입니다."
+    },
+    {
+      "id": 33,
+      "type": "row",
+      "title": "서빙",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 109,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 34,
+      "title": "예측별 발전량 RMSE",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 110,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT predicted_at AS time, pg_rmse_mw AS \"예측별 RMSE\" FROM kpg193_realtime.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT checked_at AS time, offline_baseline AS \"champion 오프라인 평가 RMSE\" FROM common.model_performance_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "MW",
+          "custom": {
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 35,
+      "title": "전력 수지 잔차",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 118,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT predicted_at AS time, mean_active_res_mw AS \"유효 (MW)\", mean_reactive_res_mvar AS \"무효 (MVAr)\"\nFROM kpg193_realtime.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          }
+        },
+        "overrides": []
+      },
+      "options": {},
+      "description": "예측값으로 계산한 버스별 유효·무효전력 불일치의 평균입니다. 정답 없이 물리식만으로 계산하므로 실측 데이터에서도 쓸 수 있습니다."
+    },
+    {
+      "id": 36,
+      "title": "전압 RMSE",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 118,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT predicted_at AS time, vm_rmse_pu AS \"Vm RMSE (pu)\" FROM kpg193_realtime.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 37,
+      "title": "응답 시간",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 126,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT requested_at AS time, CASE WHEN cached THEN latency_ms END AS \"저장된 결과 반환\",\nCASE WHEN NOT cached THEN latency_ms END AS \"새로 예측\" FROM kpg193_realtime.prediction_requests WHERE $__timeFilter(requested_at) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "showPoints": "always",
+            "spanNulls": false,
+            "insertNulls": 1800000
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 38,
+      "title": "15분당 예측 요청 수",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "aiems-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 126,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "aiems-postgres"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(requested_at, '15m'), COUNT(*) AS \"요청\"\nFROM kpg193_realtime.prediction_requests WHERE $__timeFilter(requested_at) GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "job",
+        "label": "학습 job",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "aiems-postgres"
+        },
+        "refresh": 1,
+        "sort": 0,
+        "query": "SELECT __text, __value FROM (SELECT '기본 (가장 최근 학습 job)' AS __text, 'latest' AS __value, 'infinity'::timestamptz AS sort_key UNION ALL SELECT job_label || ' (' || job_id || ')', job_id::text, submitted_at FROM common.slurm_jobs WHERE job_label NOT LIKE '%\\_eval' ESCAPE '\\') jobs ORDER BY sort_key DESC",
+        "definition": "SELECT __text, __value FROM (SELECT '기본 (가장 최근 학습 job)' AS __text, 'latest' AS __value, 'infinity'::timestamptz AS sort_key UNION ALL SELECT job_label || ' (' || job_id || ')', job_id::text, submitted_at FROM common.slurm_jobs WHERE job_label NOT LIKE '%\\_eval' ESCAPE '\\') jobs ORDER BY sort_key DESC"
+      }
+    ]
+  },
+  "id": null,
+  "version": 1
+}

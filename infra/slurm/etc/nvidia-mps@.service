@@ -1,0 +1,16 @@
+[Unit]
+Description=NVIDIA MPS control daemon for GPU %i
+After=multi-user.target
+
+[Service]
+Type=forking
+Environment=CUDA_VISIBLE_DEVICES=%i
+Environment=CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps-%i
+Environment=CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-mps-log-%i
+ExecStartPre=/bin/mkdir -p /tmp/nvidia-mps-%i /tmp/nvidia-mps-log-%i
+ExecStart=/usr/bin/nvidia-cuda-mps-control -d
+ExecStop=/bin/bash -c 'echo quit | CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps-%i /usr/bin/nvidia-cuda-mps-control'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+# Feast 프로젝트 하나 (플랫폼 공용). 정의 파일은 각 폴더에 둠:
+#   data/<소스>/feature_store.py      데이터가 제공하는 엔티티·피처 뷰 (데이터 담당)
+#   sources/<기능>/feature_store.py   기능이 쓰는 피처 묶음 (기능 담당)
+# feast apply 명령 대신 common/storage/feature_store.py의 apply_feature_definitions()로 모두 모아 적용함
+project: aiems
+provider: local
+registry: registry.db
+offline_store:
+  type: postgres
+  host: localhost
+  port: ${AIEMS_DB_PORT}
+  database: ${AIEMS_DB_NAME}
+  db_schema: public
+  user: ${AIEMS_DB_USER}
+  password: ${AIEMS_DB_PASSWORD}
+  sslmode: disable
+online_store:
+  type: redis
+  connection_string: "${AIEMS_REDIS_ADDRESS}"
+  # 서빙에는 최근 입력만 필요하므로 Redis 키를 하루 뒤 지움 (실시간 시나리오마다 키가 새로 생겨 계속 쌓이기 때문).
+  # 원본은 DB 실시간 테이블에 그대로 남음. 등록이 하루 넘게 멈추면 Redis가 비어서 서빙 입력도 비게 됨
+  key_ttl_seconds: 86400
+entity_key_serialization_version: 3

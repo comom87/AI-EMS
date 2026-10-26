@@ -1,0 +1,50 @@
+network:
+  name: "KPG193_ver2_0" # Name of the power grid network (without extension)
+  source: "file" # Data source for the grid; options: pglib, file
+  # WARNING: the following parameter is only used if source is "file"
+  network_dir: "configs" # if using source "file", this is the directory containing the network file (relative to the project root)
+
+load:
+  generator: "agg_load_profile" # Name of the load generator; options: agg_load_profile, powergraph
+  agg_profile: "default" # Name of the aggregated load profile
+  scenarios: 1000 # Number of different load scenarios to generate
+  # WARNING: the following parameters are only used if generator is "agg_load_profile"
+  # if using generator "powergraph", these parameters are ignored
+  sigma: 0.2 # max local noise
+  change_reactive_power: true # If true, changes reactive power of loads. If False, keeps the ones from the case file
+  global_range: 0.4 # Range of the global scaling factor. used to set the lower bound of the scaling factor
+  max_scaling_factor: 4.0 # Max upper bound of the global scaling factor
+  step_size: 0.05 # Step size when finding the upper bound of the global scaling factor
+  start_scaling_factor: 0.8 # Initial value of the global scaling factor
+
+topology_perturbation:
+  type: "random" # Type of topology generator; options: n_minus_k, random, none
+  # WARNING: the following parameters are only used if type is not "none"
+  k: 2 # Maximum number of components to drop in each perturbation
+  n_topology_variants: 10 # Number of unique perturbed topologies per scenario
+  elements: [branch, gen] # elements to perturb. options: branch, gen
+  outage_count_probabilities: [0.1, 0.8, 0.1] # Optional: P(N-0), P(N-1), P(N-2)
+
+generation_perturbation:
+  type: "cost_permutation" # Type of generation perturbation; options: cost_permutation, cost_perturbation, none
+  # WARNING: the following parameter is only used if type is "cost_permutation"
+  sigma: 1.0 # Size of range used for sampling scaling factor
+
+admittance_perturbation:
+  type: "random_perturbation" # Type of admittance perturbation; options: random_perturbation, none
+  # WARNING: the following parameter is only used if type is "random_perturbation"
+  sigma: 0.2 # Size of range used for sampling scaling factor
+
+settings:
+  num_processes: 10 # Number of parallel processes to use
+  data_dir: "./data/kpg193/files/kpg193_train" # Directory to save generated data relative to the project root
+  large_chunk_size: 1000 # Number of load scenarios processed before saving
+  overwrite: true # If true, overwrites existing files, if false, appends to files
+  mode: "opf" # Mode of the script; options: pf, opf. pf: power flow data where one or more operating limits – the inequality constraints defined in OPF, e.g., voltage magnitude or branch limits – may be violated. opf: generates datapoints for training OPF solvers, with cost-optimal dispatches that satisfy all operating limits (OPF-feasible)
+  include_dc_res: true # If true, also stores the results of dc power flow and dc optimal power flow
+  pf_fast: true # Whether to use fast PF solver by default (compute_ac_pf from powermodels.jl); if false, uses Ipopt-based PF. Some networks e.g. case10000_goc do not work with pf_fast: true
+  dcpf_fast: true # Whether to use fast DC PF solver (compute_dc_pf from powermodels.jl); if false, uses optimizer-based DC PF
+  enable_solver_logs: false # If true, write OPF/PF solver logs to {data_dir}/solver_log; PF fast ignores logging
+  opf_formulation: "polar" # Use "rectangular" for the faster ACR formulation. AC OPF is nonconvex, so validate that its potentially different local solution is acceptable before switching.
+  max_iter: 200 # Max iterations for Ipopt-based solvers
+  seed: null # Seed for random number generation. If null, a random seed is generated (RECOMMENDED).
