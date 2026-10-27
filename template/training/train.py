@@ -1,4 +1,4 @@
-# [학습 컨테이너] 학습·평가 코드: training/jobs.py가 만든 명령으로 Slurm 작업 안에서 실행됨
+# [학습 컨테이너] 학습·평가 코드: training/model_train.py가 만든 명령으로 Slurm 작업 안에서 실행됨
 # 컨테이너에는 MLFLOW_TRACKING_URI가 들어가므로 MLflow 서버에 바로 기록함. 저장소는 /workspace에 연결되고 그곳에서 실행됨
 
 

@@ -46,7 +46,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT 'v' || version FROM registered_model_aliases WHERE name = 'kpg193_realtime' AND alias = 'champion'"
+          "rawSql": "SELECT 'v' || version FROM registered_model_aliases WHERE name = 'optimal_power_flow' AND alias = 'champion'"
         }
       ],
       "fieldConfig": {
@@ -95,7 +95,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT lm.value FROM registered_model_aliases a\nJOIN model_version_tags t ON t.name = a.name AND t.version = a.version AND t.key = 'validation.eval_run_id'\nJOIN latest_metrics lm ON lm.run_uuid = t.value AND lm.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE a.name = 'kpg193_realtime' AND a.alias = 'champion'"
+          "rawSql": "SELECT lm.value FROM registered_model_aliases a\nJOIN model_version_tags t ON t.name = a.name AND t.version = a.version AND t.key = 'validation.eval_run_id'\nJOIN latest_metrics lm ON lm.run_uuid = t.value AND lm.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE a.name = 'optimal_power_flow' AND a.alias = 'champion'"
         }
       ],
       "fieldConfig": {
@@ -147,7 +147,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT pg_rmse_mw FROM kpg193_realtime.prediction_metrics ORDER BY predicted_at DESC LIMIT 1"
+          "rawSql": "SELECT pg_rmse_mw FROM optimal_power_flow.prediction_metrics ORDER BY predicted_at DESC LIMIT 1"
         }
       ],
       "fieldConfig": {
@@ -248,7 +248,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT COALESCE((SELECT CASE WHEN degraded THEN '저하' ELSE '정상' END FROM common.model_performance_checks WHERE model_name = 'kpg193_realtime' ORDER BY checked_at DESC LIMIT 1), '점검 전')"
+          "rawSql": "SELECT COALESCE((SELECT CASE WHEN degraded THEN '저하' ELSE '정상' END FROM common.model_performance_checks WHERE model_name = 'optimal_power_flow' ORDER BY checked_at DESC LIMIT 1), '점검 전')"
         }
       ],
       "fieldConfig": {
@@ -297,7 +297,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT COALESCE((SELECT status FROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' ORDER BY checked_at DESC LIMIT 1), '점검 전')"
+          "rawSql": "SELECT COALESCE((SELECT status FROM common.model_drift_checks WHERE model_name = 'optimal_power_flow' ORDER BY checked_at DESC LIMIT 1), '점검 전')"
         }
       ],
       "fieldConfig": {
@@ -346,7 +346,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT to_char(start_date AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') || ' · ' || state FROM dag_run\nWHERE dag_id = 'kpg193_realtime_training' AND run_type <> 'backfill' AND start_date IS NOT NULL ORDER BY start_date DESC LIMIT 1"
+          "rawSql": "SELECT to_char(start_date AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') || ' · ' || state FROM dag_run\nWHERE dag_id = 'optimal_power_flow_training' AND run_type <> 'backfill' AND start_date IS NOT NULL ORDER BY start_date DESC LIMIT 1"
         }
       ],
       "fieldConfig": {
@@ -395,7 +395,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT to_char((MAX(start_date) + interval '7 days') AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI')\nFROM dag_run WHERE dag_id = 'kpg193_realtime_training'"
+          "rawSql": "SELECT to_char((MAX(start_date) + interval '7 days') AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI')\nFROM dag_run WHERE dag_id = 'optimal_power_flow_training'"
         }
       ],
       "fieldConfig": {
@@ -494,7 +494,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT to_char(MAX(requested_at) AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') FROM kpg193_realtime.prediction_requests"
+          "rawSql": "SELECT to_char(MAX(requested_at) AT TIME ZONE 'Asia/Seoul', 'MM-DD HH24:MI') FROM optimal_power_flow.prediction_requests"
         }
       ],
       "fieldConfig": {
@@ -543,7 +543,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT COUNT(*) FROM kpg193_realtime.prediction_requests WHERE requested_at > now() - interval '24 hours'"
+          "rawSql": "SELECT COUNT(*) FROM optimal_power_flow.prediction_requests WHERE requested_at > now() - interval '24 hours'"
         }
       ],
       "fieldConfig": {
@@ -654,7 +654,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT start_date AS \"시각\", state AS \"결과\", round(duration::numeric, 1) AS \"소요(초)\", run_id\nFROM task_instance WHERE dag_id = 'kpg193_realtime_training' AND task_id = 'validate_dataset' AND start_date IS NOT NULL\nORDER BY start_date DESC LIMIT 30"
+          "rawSql": "SELECT start_date AS \"시각\", state AS \"결과\", round(duration::numeric, 1) AS \"소요(초)\", run_id\nFROM task_instance WHERE dag_id = 'optimal_power_flow_training' AND task_id = 'validate_dataset' AND start_date IS NOT NULL\nORDER BY start_date DESC LIMIT 30"
         }
       ],
       "fieldConfig": {
@@ -737,7 +737,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT checked_at AS time, (measures->>'reference_total_pd_min')::float AS \"학습 범위 최소\", (measures->>'reference_total_pd_max')::float AS \"학습 범위 최대\"\nFROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' AND measures ? 'reference_total_pd_min' ORDER BY checked_at DESC LIMIT 1"
+          "rawSql": "SELECT checked_at AS time, (measures->>'reference_total_pd_min')::float AS \"학습 범위 최소\", (measures->>'reference_total_pd_max')::float AS \"학습 범위 최대\"\nFROM common.model_drift_checks WHERE model_name = 'optimal_power_flow' AND measures ? 'reference_total_pd_min' ORDER BY checked_at DESC LIMIT 1"
         }
       ],
       "fieldConfig": {
@@ -824,7 +824,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT checked_at AS time, (measures->>'out_of_range_ratio')::float * 100 AS \"범위 밖 비율\"\nFROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+          "rawSql": "SELECT checked_at AS time, (measures->>'out_of_range_ratio')::float * 100 AS \"범위 밖 비율\"\nFROM common.model_drift_checks WHERE model_name = 'optimal_power_flow' AND $__timeFilter(checked_at) ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -883,7 +883,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT checked_at AS time, (measures->>'total_pd_psi')::float AS \"총 유효부하\", (measures->>'total_qd_psi')::float AS \"총 무효부하\",\n(measures->>'branch_outages_psi')::float AS \"탈락 선로 수\", (measures->>'gen_outages_psi')::float AS \"정지 발전기 수\", (measures->>'max_bus_pd_psi')::float AS \"버스별 부하 (최대)\"\nFROM common.model_drift_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+          "rawSql": "SELECT checked_at AS time, (measures->>'total_pd_psi')::float AS \"총 유효부하\", (measures->>'total_qd_psi')::float AS \"총 무효부하\",\n(measures->>'branch_outages_psi')::float AS \"탈락 선로 수\", (measures->>'gen_outages_psi')::float AS \"정지 발전기 수\", (measures->>'max_bus_pd_psi')::float AS \"버스별 부하 (최대)\"\nFROM common.model_drift_checks WHERE model_name = 'optimal_power_flow' AND $__timeFilter(checked_at) ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -1051,7 +1051,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT r.name AS \"학습 run\", to_timestamp(r.start_time / 1000) AS \"시작\",\nMAX(CASE WHEN t.key = 'aiems.drift_status' THEN t.value END) AS \"판정\",\nMAX(CASE WHEN m.key = 'drift/out_of_range_ratio' THEN m.value END) AS \"범위 밖 비율\",\nMAX(CASE WHEN m.key = 'drift/total_pd_psi' THEN m.value END) AS \"총 부하 PSI\",\nMAX(CASE WHEN m.key = 'drift/max_bus_pd_psi' THEN m.value END) AS \"버스 부하 PSI (최대)\"\nFROM runs r JOIN experiments e ON e.experiment_id = r.experiment_id AND e.name = 'kpg193_realtime'\nJOIN latest_metrics m ON m.run_uuid = r.run_uuid AND m.key LIKE 'drift/%'\nLEFT JOIN tags t ON t.run_uuid = r.run_uuid\nWHERE r.lifecycle_stage = 'active' GROUP BY r.run_uuid, r.name, r.start_time ORDER BY r.start_time DESC"
+          "rawSql": "SELECT r.name AS \"학습 run\", to_timestamp(r.start_time / 1000) AS \"시작\",\nMAX(CASE WHEN t.key = 'aiems.drift_status' THEN t.value END) AS \"판정\",\nMAX(CASE WHEN m.key = 'drift/out_of_range_ratio' THEN m.value END) AS \"범위 밖 비율\",\nMAX(CASE WHEN m.key = 'drift/total_pd_psi' THEN m.value END) AS \"총 부하 PSI\",\nMAX(CASE WHEN m.key = 'drift/max_bus_pd_psi' THEN m.value END) AS \"버스 부하 PSI (최대)\"\nFROM runs r JOIN experiments e ON e.experiment_id = r.experiment_id AND e.name = 'optimal_power_flow'\nJOIN latest_metrics m ON m.run_uuid = r.run_uuid AND m.key LIKE 'drift/%'\nLEFT JOIN tags t ON t.run_uuid = r.run_uuid\nWHERE r.lifecycle_stage = 'active' GROUP BY r.run_uuid, r.name, r.start_time ORDER BY r.start_time DESC"
         }
       ],
       "fieldConfig": {
@@ -1098,7 +1098,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT r.name AS \"학습 run\", to_timestamp(r.start_time / 1000) AS \"시작\",\nround((r.end_time - r.start_time) / 60000.0, 1) AS \"소요(분)\", r.status AS \"상태\",\nMAX(CASE WHEN t.key = 'kpg193.data_dir' THEN t.value END) AS \"데이터\",\nMAX(CASE WHEN t.key = 'kpg193.KPG193_ver2_0.scenario_count' THEN t.value END) AS \"시나리오 수\",\nMAX(CASE WHEN t.key = 'aiems.model_version' THEN 'v' || t.value END) AS \"등록 버전\",\nMAX(CASE WHEN t.key = 'aiems.promoted' THEN t.value END) AS \"승격\",\nMAX(em.value) AS \"평가 RMSE (MW)\"\nFROM runs r JOIN experiments e ON e.experiment_id = r.experiment_id AND e.name = 'kpg193_realtime'\nLEFT JOIN tags t ON t.run_uuid = r.run_uuid\nLEFT JOIN runs ev ON ev.name = r.name || '_eval' AND ev.experiment_id = r.experiment_id\nLEFT JOIN latest_metrics em ON em.run_uuid = ev.run_uuid AND em.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE r.lifecycle_stage = 'active' AND r.name NOT LIKE '%\\_eval' ESCAPE '\\'\nGROUP BY r.run_uuid, r.name, r.start_time, r.end_time, r.status ORDER BY r.start_time DESC"
+          "rawSql": "SELECT r.name AS \"학습 run\", to_timestamp(r.start_time / 1000) AS \"시작\",\nround((r.end_time - r.start_time) / 60000.0, 1) AS \"소요(분)\", r.status AS \"상태\",\nMAX(CASE WHEN t.key = 'kpg193.data_dir' THEN t.value END) AS \"데이터\",\nMAX(CASE WHEN t.key = 'kpg193.KPG193_ver2_0.scenario_count' THEN t.value END) AS \"시나리오 수\",\nMAX(CASE WHEN t.key = 'aiems.model_version' THEN 'v' || t.value END) AS \"등록 버전\",\nMAX(CASE WHEN t.key = 'aiems.promoted' THEN t.value END) AS \"승격\",\nMAX(em.value) AS \"평가 RMSE (MW)\"\nFROM runs r JOIN experiments e ON e.experiment_id = r.experiment_id AND e.name = 'optimal_power_flow'\nLEFT JOIN tags t ON t.run_uuid = r.run_uuid\nLEFT JOIN runs ev ON ev.name = r.name || '_eval' AND ev.experiment_id = r.experiment_id\nLEFT JOIN latest_metrics em ON em.run_uuid = ev.run_uuid AND em.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE r.lifecycle_stage = 'active' AND r.name NOT LIKE '%\\_eval' ESCAPE '\\'\nGROUP BY r.run_uuid, r.name, r.start_time, r.end_time, r.status ORDER BY r.start_time DESC"
         }
       ],
       "fieldConfig": {
@@ -1477,7 +1477,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT checked_at AS time, recent_value AS \"최근 하루 RMSE\",\noffline_baseline * 1.2 AS \"재학습 조건선\", offline_baseline AS \"오프라인 평가 RMSE (참고)\"\nFROM common.model_performance_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+          "rawSql": "SELECT checked_at AS time, recent_value AS \"최근 하루 RMSE\",\noffline_baseline * 1.2 AS \"재학습 조건선\", offline_baseline AS \"오프라인 평가 RMSE (참고)\"\nFROM common.model_performance_checks WHERE model_name = 'optimal_power_flow' AND $__timeFilter(checked_at) ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -1537,7 +1537,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT requested_at AS \"시각\",\nreplace(replace(replace(replace(reason, 'performance_degradation', '성능 저하'), 'out_of_range', '학습 범위 밖 입력'), 'shifted', '입력 분포 변화'), ',', ', ') AS \"이유\"\nFROM common.model_retraining_requests WHERE model_name = 'kpg193_realtime' ORDER BY requested_at DESC LIMIT 30"
+          "rawSql": "SELECT requested_at AS \"시각\",\nreplace(replace(replace(replace(reason, 'performance_degradation', '성능 저하'), 'out_of_range', '학습 범위 밖 입력'), 'shifted', '입력 분포 변화'), ',', ', ') AS \"이유\"\nFROM common.model_retraining_requests WHERE model_name = 'optimal_power_flow' ORDER BY requested_at DESC LIMIT 30"
         }
       ],
       "fieldConfig": {
@@ -1570,7 +1570,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT start_date AS \"시작\", end_date AS \"종료\",\nround(EXTRACT(EPOCH FROM (end_date - start_date)) / 60.0, 1) AS \"소요(분)\", state AS \"상태\",\nCASE\n    WHEN run_type = 'scheduled' THEN '자동 (월간 정기)'\n    WHEN run_id LIKE 'retrain\\_%' THEN '트리거 (점검 결과 재학습 요청)'\n    WHEN run_type = 'manual' THEN '수동'\n    WHEN run_type = 'backfill' THEN '건너뜀'\n    ELSE run_type\nEND AS \"실행 종류\", run_id\nFROM dag_run WHERE dag_id = 'kpg193_realtime_training' ORDER BY start_date DESC NULLS LAST LIMIT 30"
+          "rawSql": "SELECT start_date AS \"시작\", end_date AS \"종료\",\nround(EXTRACT(EPOCH FROM (end_date - start_date)) / 60.0, 1) AS \"소요(분)\", state AS \"상태\",\nCASE\n    WHEN run_type = 'scheduled' THEN '자동 (월간 정기)'\n    WHEN run_id LIKE 'retrain\\_%' THEN '트리거 (점검 결과 재학습 요청)'\n    WHEN run_type = 'manual' THEN '수동'\n    WHEN run_type = 'backfill' THEN '건너뜀'\n    ELSE run_type\nEND AS \"실행 종류\", run_id\nFROM dag_run WHERE dag_id = 'optimal_power_flow_training' ORDER BY start_date DESC NULLS LAST LIMIT 30"
         }
       ],
       "fieldConfig": {
@@ -1578,7 +1578,7 @@
         "overrides": []
       },
       "options": {},
-      "description": "Airflow kpg193_realtime_training의 실행 기록입니다. 실행 종류는 자동(매월 정해진 날 실행), 트리거(데이터 분포 변화나 성능 저하로 자동 재학습), 수동(사람이 Airflow에서 직접 실행)으로 나뉩니다."
+      "description": "Airflow optimal_power_flow_training의 실행 기록입니다. 실행 종류는 자동(매월 정해진 날 실행), 트리거(데이터 분포 변화나 성능 저하로 자동 재학습), 수동(사람이 Airflow에서 직접 실행)으로 나뉩니다."
     },
     {
       "id": 32,
@@ -1604,7 +1604,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT 'v' || mv.version AS \"버전\", to_timestamp(mv.creation_time / 1000) AS \"등록\",\nCASE WHEN a.alias IS NOT NULL THEN 'champion' ELSE '' END AS \"현재\",\nMAX(CASE WHEN t.key = 'validation.decision' THEN t.value END) AS \"판정\",\nMAX(CASE WHEN t.key = 'validation.compared_champion_version' THEN t.value END) AS \"비교 대상\",\nMAX(em.value) AS \"평가 RMSE (MW)\",\nCASE\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) = 'passed all checks'\n         AND MAX(CASE WHEN t.key = 'validation.compared_champion_version' THEN t.value END) = 'none'\n        THEN '비교할 champion이 없어 바로 승격 (첫 모델)'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) = 'passed all checks'\n        THEN 'champion보다 발전량 RMSE가 작아 승격'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) LIKE '%champion evaluation failed%'\n        THEN 'champion 재평가가 실패해 승격하지 않음'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) LIKE '%not better than champion%'\n        THEN regexp_replace(MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END),\n             '^.*rmse_pg_generators_mw ([0-9.e+-]+) not better than champion ([0-9.e+-]+).*$',\n             'champion보다 발전량 RMSE가 작지 않음 (새 모델 \\1 MW, champion \\2 MW)')\n    ELSE MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END)\nEND AS \"사유\"\nFROM model_versions mv\nLEFT JOIN registered_model_aliases a ON a.name = mv.name AND a.version = mv.version AND a.alias = 'champion'\nLEFT JOIN model_version_tags t ON t.name = mv.name AND t.version = mv.version\nLEFT JOIN model_version_tags et ON et.name = mv.name AND et.version = mv.version AND et.key = 'validation.eval_run_id'\nLEFT JOIN latest_metrics em ON em.run_uuid = et.value AND em.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE mv.name = 'kpg193_realtime' GROUP BY mv.version, mv.creation_time, a.alias ORDER BY mv.version DESC"
+          "rawSql": "SELECT 'v' || mv.version AS \"버전\", to_timestamp(mv.creation_time / 1000) AS \"등록\",\nCASE WHEN a.alias IS NOT NULL THEN 'champion' ELSE '' END AS \"현재\",\nMAX(CASE WHEN t.key = 'validation.decision' THEN t.value END) AS \"판정\",\nMAX(CASE WHEN t.key = 'validation.compared_champion_version' THEN t.value END) AS \"비교 대상\",\nMAX(em.value) AS \"평가 RMSE (MW)\",\nCASE\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) = 'passed all checks'\n         AND MAX(CASE WHEN t.key = 'validation.compared_champion_version' THEN t.value END) = 'none'\n        THEN '비교할 champion이 없어 바로 승격 (첫 모델)'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) = 'passed all checks'\n        THEN 'champion보다 발전량 RMSE가 작아 승격'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) LIKE '%champion evaluation failed%'\n        THEN 'champion 재평가가 실패해 승격하지 않음'\n    WHEN MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END) LIKE '%not better than champion%'\n        THEN regexp_replace(MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END),\n             '^.*rmse_pg_generators_mw ([0-9.e+-]+) not better than champion ([0-9.e+-]+).*$',\n             'champion보다 발전량 RMSE가 작지 않음 (새 모델 \\1 MW, champion \\2 MW)')\n    ELSE MAX(CASE WHEN t.key = 'validation.reason' THEN t.value END)\nEND AS \"사유\"\nFROM model_versions mv\nLEFT JOIN registered_model_aliases a ON a.name = mv.name AND a.version = mv.version AND a.alias = 'champion'\nLEFT JOIN model_version_tags t ON t.name = mv.name AND t.version = mv.version\nLEFT JOIN model_version_tags et ON et.name = mv.name AND et.version = mv.version AND et.key = 'validation.eval_run_id'\nLEFT JOIN latest_metrics em ON em.run_uuid = et.value AND em.key = 'test/KPG193_ver2_0/rmse_pg_generators_mw'\nWHERE mv.name = 'optimal_power_flow' GROUP BY mv.version, mv.creation_time, a.alias ORDER BY mv.version DESC"
         }
       ],
       "fieldConfig": {
@@ -1651,7 +1651,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT predicted_at AS time, pg_rmse_mw AS \"예측별 RMSE\" FROM kpg193_realtime.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
+          "rawSql": "SELECT predicted_at AS time, pg_rmse_mw AS \"예측별 RMSE\" FROM optimal_power_flow.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
         },
         {
           "refId": "B",
@@ -1662,7 +1662,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT checked_at AS time, offline_baseline AS \"champion 오프라인 평가 RMSE\" FROM common.model_performance_checks WHERE model_name = 'kpg193_realtime' AND $__timeFilter(checked_at) ORDER BY 1"
+          "rawSql": "SELECT checked_at AS time, offline_baseline AS \"champion 오프라인 평가 RMSE\" FROM common.model_performance_checks WHERE model_name = 'optimal_power_flow' AND $__timeFilter(checked_at) ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -1702,7 +1702,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT predicted_at AS time, mean_active_res_mw AS \"유효 (MW)\", mean_reactive_res_mvar AS \"무효 (MVAr)\"\nFROM kpg193_realtime.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
+          "rawSql": "SELECT predicted_at AS time, mean_active_res_mw AS \"유효 (MW)\", mean_reactive_res_mvar AS \"무효 (MVAr)\"\nFROM optimal_power_flow.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -1742,7 +1742,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT predicted_at AS time, vm_rmse_pu AS \"Vm RMSE (pu)\" FROM kpg193_realtime.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
+          "rawSql": "SELECT predicted_at AS time, vm_rmse_pu AS \"Vm RMSE (pu)\" FROM optimal_power_flow.prediction_metrics WHERE $__timeFilter(predicted_at) ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -1781,7 +1781,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT requested_at AS time, CASE WHEN cached THEN latency_ms END AS \"저장된 결과 반환\",\nCASE WHEN NOT cached THEN latency_ms END AS \"새로 예측\" FROM kpg193_realtime.prediction_requests WHERE $__timeFilter(requested_at) ORDER BY 1"
+          "rawSql": "SELECT requested_at AS time, CASE WHEN cached THEN latency_ms END AS \"저장된 결과 반환\",\nCASE WHEN NOT cached THEN latency_ms END AS \"새로 예측\" FROM optimal_power_flow.prediction_requests WHERE $__timeFilter(requested_at) ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -1821,7 +1821,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(requested_at, '15m'), COUNT(*) AS \"요청\"\nFROM kpg193_realtime.prediction_requests WHERE $__timeFilter(requested_at) GROUP BY 1 ORDER BY 1"
+          "rawSql": "SELECT $__timeGroupAlias(requested_at, '15m'), COUNT(*) AS \"요청\"\nFROM optimal_power_flow.prediction_requests WHERE $__timeFilter(requested_at) GROUP BY 1 ORDER BY 1"
         }
       ],
       "fieldConfig": {

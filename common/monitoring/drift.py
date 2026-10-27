@@ -71,13 +71,18 @@ def check_data_drift(spec):
     return status
 
 
-def record_training_drift(spec, run_name, data_dir):
-    # 새 학습 데이터가 champion 학습 데이터와 얼마나 다른지 학습 run에 남김 (drift/* 지표, aiems.drift_status 태그)
+def compare_new_data(spec, data_dir):
+    # 학습 전에 불림: 이번 학습 데이터 가운데 지난 학습 뒤 새로 쌓인 데이터가 그 전 데이터와 얼마나 다른지 잼. 비교할 것이 없으면 None
+    return import_function_module(spec["function"], "monitoring.input_drift").measure_new_data_drift(spec, data_dir)
+
+
+def record_champion_comparison(spec, run_name, data_dir):
+    # 학습 뒤에 불림: 운영 모델(champion)과 후보 모델(이번 run)의 학습 데이터 차이를 학습 run에 남김 (drift/* 지표, aiems.drift_status 태그)
     model_name = spec["name"]
     champion = fetch_champion_version(model_name)
     if champion is None:
         return
-    measures = import_function_module(spec["function"], "monitoring.input_drift").measure_training_drift(spec, champion[1], data_dir)
+    measures = import_function_module(spec["function"], "monitoring.input_drift").measure_champion_data_drift(spec, champion[1], data_dir)
     client = connect_tracking_server()
     _, run_id = fetch_run_id(client, model_name, run_name)
     for name, value in measures.items():

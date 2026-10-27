@@ -1,0 +1,25 @@
+# 점검 파이프라인 → DAG <모델 이름>_monitoring
+# 서빙 앱이 새 예측을 저장할 때마다(Airflow에 신호를 보냄) 성능과 입력 분포를 점검하고, 필요하면 학습 파이프라인을 실행함 (cooldown_days 안에는 다시 실행하지 않음)
+dag:
+  description: 예측마다 성능·분포 점검, 필요하면 재학습
+  schedule: predictions
+
+tasks:
+  check_performance:
+    operator: check_performance
+
+  check_drift:
+    operator: check_drift
+
+  request_retraining:
+    operator: request_retraining
+    args:
+      pipeline: training
+    dependencies: [check_performance, check_drift]
+
+  trigger_training:
+    operator: trigger_pipeline
+    args:
+      pipeline: training
+      run_id: "retrain_{{ ts_nodash }}"
+    dependencies: [request_retraining]

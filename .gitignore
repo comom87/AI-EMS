@@ -12,7 +12,7 @@ data/*/files/
 mlruns/
 mlartifacts/
 mlflow.db
-work/
+tmp/
 
 # Slurm 학습 이미지와 작업 로그 (작업 기록은 PostgreSQL common 스키마에 있음)
 infra/slurm/sif/

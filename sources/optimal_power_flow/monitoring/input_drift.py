@@ -1,12 +1,12 @@
 # [Airflow] 최적 조류(OPF) 예측 모델의 입력 분포 비교: 시나리오별 총 부하, 선로·발전기 정지 수, 모선별 유효 부하
-# 점검 DAG(common/monitoring/drift.py)가 measure_recent_drift, 학습 DAG가 measure_training_drift를 부름
+# 점검 DAG(common/monitoring/drift.py)가 measure_recent_drift, 학습 DAG가 measure_new_data_drift(학습 전)와 measure_champion_data_drift(학습 뒤)를 부름
 import pandas as pd
 from sqlalchemy import create_engine, text
 
 from common.monitoring.drift import compute_psi
 from common.config.settings import DATABASE_URL, PROJECT_ROOT
-from common.model_registry.tracking import fetch_run_tags
-from sources.optimal_power_flow.training.data import fetch_network_name
+from common.model_registry.tracking import fetch_latest_tagged_run_id, fetch_run_tags
+from sources.optimal_power_flow.training.dataset_preparation import fetch_network_name
 
 
 def read_dataset_inputs(data_dir, network):
@@ -41,7 +41,7 @@ def summarize_scenarios(bus, branch, gen):
     return summary
 
 
-def measure_data_drift(reference, current, psi_threshold):
+def compare_input_distributions(reference, current, psi_threshold):
     # reference, current: read_*_inputs의 (bus, branch, gen). 이름이 _psi로 끝나는 값과 out_of_range_ratio로 판정함
     reference_summary = summarize_scenarios(*reference)
     current_summary = summarize_scenarios(*current)
@@ -81,11 +81,31 @@ def measure_recent_drift(spec, champion_run_id):
     if total_count - first_scenario < window:
         return None
     current = read_realtime_inputs(spec["data_source"], first_scenario, total_count)
-    return first_scenario, total_count - 1, measure_data_drift(reference, current, spec["drift"]["psi_threshold"])
+    return first_scenario, total_count - 1, compare_input_distributions(reference, current, spec["drift"]["psi_threshold"])
 
 
-def measure_training_drift(spec, champion_run_id, data_dir):
-    # 새 학습 데이터(data_dir)를 champion 학습 입력과 비교
+def measure_champion_data_drift(spec, champion_run_id, data_dir):
+    # 후보 모델의 학습 데이터(data_dir)를 운영 모델(champion)의 학습 입력과 비교
     reference, _ = read_training_inputs(spec, champion_run_id)
     current = read_dataset_inputs(data_dir, fetch_network_name(spec))
-    return measure_data_drift(reference, current, spec["drift"]["psi_threshold"])
+    return compare_input_distributions(reference, current, spec["drift"]["psi_threshold"])
+
+
+def measure_new_data_drift(spec, data_dir):
+    # 이번 학습 데이터(data_dir) 가운데 지난 학습 뒤 새로 들어온 시나리오를 그 전 시나리오와 비교.
+    # 지난 학습이 없거나, 다른 폴더로 학습했거나, 새 시나리오가 없으면 None
+    prefix = spec["data_source"]
+    network = fetch_network_name(spec)
+    previous_run_id = fetch_latest_tagged_run_id(spec["name"], f"{prefix}.data_dir")
+    if previous_run_id is None:
+        return None
+    tags = fetch_run_tags(previous_run_id)
+    if tags[f"{prefix}.data_dir"] != data_dir:
+        return None
+    previous_count = int(tags[f"{prefix}.{network}.scenario_count"])
+    tables = read_dataset_inputs(data_dir, network)
+    if tables[0]["scenario"].max() < previous_count:
+        return None
+    reference = tuple(table[table["scenario"] < previous_count] for table in tables)
+    current = tuple(table[table["scenario"] >= previous_count] for table in tables)
+    return compare_input_distributions(reference, current, spec["drift"]["psi_threshold"])

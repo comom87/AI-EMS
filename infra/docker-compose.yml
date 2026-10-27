@@ -71,6 +71,8 @@ services:
       AIRFLOW__CORE__DAGS_FOLDER: ${AIEMS_PROJECT_ROOT}/dags
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIEMS_AIRFLOW_DATABASE_URL}
       AIRFLOW__WEBSERVER__WEB_SERVER_PORT: ${AIEMS_AIRFLOW_PORT}
+      # 서빙 앱이 REST API(dataset 이벤트)로 예측 신호를 보내므로 계정·비밀번호 인증을 켬 (계정은 .env의 AIEMS_AIRFLOW_API_USER)
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
       # 기본 로그 포트(8793, 8794)는 opengridfm-mlops의 Airflow가 쓰고 있어서 피함
       AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT: "8795"
       AIRFLOW__LOGGING__TRIGGER_LOG_SERVER_PORT: "8796"
@@ -89,7 +91,7 @@ services:
         condition: service_healthy
 
   # 서빙 (serving/app.py). 프로세스 하나가 predictor.py가 있는 모든 모델을 서빙함: POST /models/<모델>/predict
-  # Airflow의 <모델>_predict DAG가 부름. 모델 계산 스레드 수는 .env의 AIEMS_SERVING_CPUS
+  # 외부 시스템이 부르고, 새 예측을 저장하면 Airflow에 신호를 보내 <모델>_monitoring DAG를 실행함. 모델 계산 스레드 수는 .env의 AIEMS_SERVING_CPUS
   serving:
     build:
       context: ./docker/serving

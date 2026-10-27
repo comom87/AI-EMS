@@ -1,6 +1,6 @@
 # Feast 프로젝트 하나 (플랫폼 공용). 정의 파일은 각 폴더에 둠:
-#   data/<소스>/feature_store.py      데이터가 제공하는 엔티티·피처 뷰 (데이터 담당)
-#   sources/<기능>/feature_store.py   기능이 쓰는 피처 묶음 (기능 담당)
+#   data/<소스>/storage/feature_store.py      데이터가 제공하는 엔티티·피처 뷰 (데이터 담당)
+#   sources/<기능>/storage/feature_store.py   기능이 쓰는 피처 묶음 (기능 담당)
 # feast apply 명령 대신 common/storage/feature_store.py의 apply_feature_definitions()로 모두 모아 적용함
 project: aiems
 provider: local

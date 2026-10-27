@@ -5,6 +5,10 @@ from sqlalchemy import create_engine
 
 from common.config.settings import DATABASE_URL
 from common.config.model_specs import fetch_model_dir
+from common.config.source_specs import fetch_data_source_dir
+
+# 데이터 소스·기능 폴더 안에서 스키마 파일의 위치
+SCHEMA_FILE = "storage/schema.sql"
 
 
 def apply_sql_file(path):
@@ -18,8 +22,13 @@ def apply_sql_file(path):
         connection.close()
 
 
+def apply_source_schema(source):
+    # data/<소스>/storage/schema.sql: 소스 스키마를 만들고, 원본·실시간 표가 있으면 인덱스까지 만듦
+    apply_sql_file(fetch_data_source_dir(source) / SCHEMA_FILE)
+
+
 def apply_model_schema(model_name):
-    # sources/<기능>/schema.sql: 서빙이 예측을 저장하는 표. 없으면 건너뜀
-    path = fetch_model_dir(model_name) / "schema.sql"
+    # sources/<기능>/storage/schema.sql: 서빙이 예측을 저장하는 표. 없으면 건너뜀
+    path = fetch_model_dir(model_name) / SCHEMA_FILE
     if path.exists():
         apply_sql_file(path)

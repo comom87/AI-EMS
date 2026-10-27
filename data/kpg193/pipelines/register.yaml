@@ -1,0 +1,26 @@
+# 등록 파이프라인 → DAG kpg193_register
+# 새 데이터를 등록하고 Feast 온라인 저장소(Redis)에 올림. 서빙 앱은 예측할 때 Redis의 최신 입력을 읽음
+# operator 목록: dags/operators/. function은 이 소스의 handler/에서 찾음
+dag:
+  description: KPG193 계통(모선 193개)의 최적 조류(OPF) 시나리오. datakit으로 미리 만든 원본 9,994개를 15분마다 1개씩 실시간 데이터로 등록하고 Redis에 반영
+  owner: comom87                     # 담당자 (Airflow 화면의 Owner 칸)
+  schedule: "*/15 * * * *"
+  retries: 3                         # 등록 주기(15분) 안에 끝나도록 1분 간격으로 다시 시도
+
+tasks:
+  apply_schema:
+    operator: apply_schema
+
+  apply_features:
+    operator: apply_features         # Feast 정의 파일이 바뀌었을 때만 모두 모아 적용
+    dependencies: [apply_schema]
+
+  register_data:
+    operator: function
+    args:
+      function: ingest.register_new_data
+    dependencies: [apply_features]
+
+  materialize_features:
+    operator: materialize_features
+    dependencies: [register_data]

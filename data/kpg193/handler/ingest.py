@@ -5,9 +5,8 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-from common.storage.schemas import apply_sql_file
+from common.storage.schemas import apply_source_schema
 from common.config.settings import DATABASE_URL
-from common.config.source_specs import fetch_data_source_dir
 
 EXCLUDED_FILES = {"stats"}
 
@@ -21,11 +20,6 @@ TABLE_NAME_OVERRIDES = {
 
 RAW_TABLES = ["bus", "gen", "branch", "y_bus", "runtime"]
 LOAD_PROFILE_TABLE = "scenarios_agg_load_profile"
-
-
-def apply_source_schema(source):
-    # data/<소스>/schema.sql: 스키마를 만들고, 원본·실시간 테이블이 있으면 인덱스까지 만듦. 등록 DAG가 시작할 때마다 부름
-    apply_sql_file(fetch_data_source_dir(source) / "schema.sql")
 
 
 def register_dataset(source, data_dir):
@@ -91,8 +85,10 @@ def record_realtime_scenario(engine, source, tables, event_timestamp):
         )
 
 
-def register_new_data(source):
-    # 등록 DAG가 부름. 실제 계통 데이터가 들어오는 상황을 흉내 내어, 원본 시나리오를 다음 번호로 하나씩 실시간 테이블에 등록함
+def register_new_data(spec):
+    # 등록 파이프라인(data/<소스>/pipelines/register.yaml)이 부름. spec: {name: <소스>, kind: source}
+    # 실제 계통 데이터가 들어오는 상황을 흉내 내어, 원본 시나리오를 다음 번호로 하나씩 실시간 테이블에 등록함
+    source = spec["name"]
     engine = create_engine(DATABASE_URL)
     scenario_index = fetch_next_scenario_index(engine, source)
     record_realtime_scenario(engine, source, fetch_scenario_tables(engine, source, scenario_index), datetime.now(timezone.utc))

@@ -1,5 +1,5 @@
 # Feast 프로젝트 하나에 데이터 폴더와 기능 폴더의 정의 파일을 모아 적용하고, 데이터 소스별로 Redis에 반영함
-# 설정: infra/feast/feature_store.yaml. 정의: data/<소스>/feature_store.py, sources/<기능>/feature_store.py
+# 설정: infra/feast/feature_store.yaml. 정의: data/<소스>/storage/feature_store.py, sources/<기능>/storage/feature_store.py
 import hashlib
 import importlib
 from datetime import datetime, timezone
@@ -12,7 +12,8 @@ from common.config.model_specs import FUNCTIONS_DIR
 from common.config.source_specs import DATA_DIR
 
 FEAST_DIR = PROJECT_ROOT / "infra" / "feast"
-DEFINITION_FILE = "feature_store.py"
+# 데이터 소스·기능 폴더 안에서 Feast 정의 파일의 위치
+DEFINITION_FILE = "storage/feature_store.py"
 FEAST_OBJECT_TYPES = (Entity, DataSource, FeatureView, FeatureService)
 
 
@@ -71,6 +72,6 @@ def apply_feature_definitions():
 
 def materialize_source_features(source):
     # 데이터 소스 하나의 피처 뷰만 Redis에 반영 (지난번 반영 이후 들어온 데이터)
-    module = importlib.import_module(f"data.{source}.feature_store")
+    module = importlib.import_module(f"data.{source}.storage.feature_store")
     views = [item.name for item in vars(module).values() if isinstance(item, FeatureView)]
     connect_feature_store().materialize_incremental(datetime.now(timezone.utc), feature_views=views)

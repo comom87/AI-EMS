@@ -1,0 +1,76 @@
+# 학습 파이프라인 → DAG <모델 이름>_training
+# 데이터 준비 → 분포 측정 → Slurm 학습 → 후보·champion 평가·분포 기록 → 정리 → 등록·승격
+# 단계를 더하거나 빼고, 순서(dependencies)와 주기(schedule)를 바꿀 수 있음. 새 파이프라인은 이 폴더에 YAML을 하나 더 만듦
+# operator 목록: dags/operators/. args에는 Airflow 템플릿을 씀 ({{ params.data_dir }} 등)
+dag:
+  description: 데이터 준비 → Slurm 학습·평가 → champion과 비교 → 등록·승격
+  schedule: "@monthly"                       # cron·프리셋, predictions(서빙 앱이 새 예측을 저장할 때마다)
+  params:                                    # 실행할 때 바꿀 수 있는 값. 기본값에 모델 명세를 쓸 수 있음
+    config_path: "{{ spec.training.config }}"
+    data_dir: "{{ spec.training.data_dir }}"  # 다른 폴더를 주면 그 데이터를 그대로 학습
+
+tasks:
+  export_dataset:
+    operator: function
+    args:
+      function: training.dataset_preparation.export_dataset
+
+  validate_dataset:
+    operator: function
+    args:
+      function: training.dataset_preparation.validate_dataset
+      config_path: "{{ params.config_path }}"
+      data_dir: "{{ params.data_dir }}"
+    dependencies: [export_dataset]
+
+  measure_new_data_drift:                    # 지난 학습 뒤 새로 쌓인 데이터를 그 전 데이터와 비교 (결과는 XCom, 학습을 막지는 않음)
+    operator: measure_new_data_drift
+    args:
+      data_dir: "{{ params.data_dir }}"
+    dependencies: [validate_dataset]
+
+  train_model:
+    operator: slurm_train
+    retries: 3
+    args:
+      job: training.model_train.build_train_job
+      describe: training.dataset_preparation.describe_dataset
+      config_path: "{{ params.config_path }}"
+      data_dir: "{{ params.data_dir }}"
+    dependencies: [measure_new_data_drift]
+
+  evaluate_model:
+    operator: slurm_evaluate
+    retries: 3
+    args:
+      job: training.model_train.build_evaluate_job
+      model: candidate
+      config_path: "{{ params.config_path }}"
+      data_dir: "{{ params.data_dir }}"
+    dependencies: [train_model]
+
+  evaluate_champion:
+    operator: slurm_evaluate
+    retries: 3
+    args:
+      job: training.model_train.build_evaluate_job
+      model: champion
+      config_path: "{{ params.config_path }}"
+      data_dir: "{{ params.data_dir }}"
+    dependencies: [evaluate_model]
+
+  record_champion_data_drift:                # 운영 모델과 후보 모델의 학습 데이터 차이를 이번 학습 run에 기록
+    operator: record_champion_data_drift
+    args:
+      data_dir: "{{ params.data_dir }}"
+    dependencies: [train_model]
+
+  delete_run_files:
+    operator: delete_run_files
+    trigger_rule: all_done
+    dependencies: [evaluate_champion, record_champion_data_drift]
+
+  validate_model:
+    operator: register_model
+    trigger_rule: all_done
+    dependencies: [delete_run_files]

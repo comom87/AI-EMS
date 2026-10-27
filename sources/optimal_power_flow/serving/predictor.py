@@ -11,7 +11,7 @@ from gridfm_graphkit.io.param_handler import NestedNamespace, get_task, get_task
 from torch_geometric.data import Batch
 
 from common.config.model_specs import load_function_model_spec
-from sources.optimal_power_flow.serving import inputs
+from sources.optimal_power_flow.serving import serving_features
 
 PREDICTION_COLUMN_NAMES = {
     "active res. (MW)": "active_res_mw",
@@ -20,7 +20,7 @@ PREDICTION_COLUMN_NAMES = {
 }
 # 이 모델이 구독하는 데이터 소스 (기능 폴더 models/model.yaml의 data_source)
 DATA_SOURCE = load_function_model_spec(Path(__file__).parents[1].name)["data_source"]
-# 예측 결과를 저장하는 이 모델 스키마의 테이블과 정렬 열 (기능 폴더의 schema.sql)
+# 예측 결과를 저장하는 이 모델 스키마의 테이블과 정렬 열 (기능 폴더의 storage/schema.sql)
 PREDICTION_TABLES = {"bus_predictions": "bus", "gen_predictions": "idx"}
 
 
@@ -40,17 +40,17 @@ def load_model(model_dir):
         "task": task,
         "normalizer": normalizer,
         "transforms": get_task_transforms(args),
-        "sizes": inputs.fetch_topology_sizes(DATA_SOURCE),
+        "sizes": serving_features.fetch_topology_sizes(DATA_SOURCE),
     }
 
 
 def fetch_latest_scenario(store):
     # 서빙이 예측할 최신 입력: Redis에 올라간 가장 최근 시나리오 번호
-    return inputs.fetch_latest_scenario(store, DATA_SOURCE)
+    return serving_features.fetch_latest_scenario(store, DATA_SOURCE)
 
 
 def predict_scenario(model, store, scenario):
-    tables = inputs.fetch_scenario_tables(store, DATA_SOURCE, scenario, model["sizes"])
+    tables = serving_features.fetch_scenario_tables(store, DATA_SOURCE, scenario, model["sizes"])
     data = build_hetero_data(*tables, scenario)
     model["normalizer"].transform(data)
     batch = Batch.from_data_list([model["transforms"](data)])

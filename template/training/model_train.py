@@ -15,10 +15,10 @@ def build_train_job(spec, config_path, data_dir, exp_name, run_name):
     return {"image": image, "command": command, "job_key": fetch_job_key(image, f"fit_model {config_path} {data_dir} {exp_name}")}
 
 
-def build_evaluate_job(spec, config_path, data_dir, exp_name, run_name, model_run_id, work_dir):
+def build_evaluate_job(spec, config_path, data_dir, exp_name, run_name, model_run_id, temp_dir):
     # 모델 run(model_run_id: 후보 또는 champion)을 같은 시험 데이터로 평가함. run_name은 <학습 run>_eval 또는 <학습 run>_champion_eval
     # 컨테이너 안 평가 코드가 run 이름 run_name으로 run을 만들고 model.yaml evaluation.metric 지표를 기록해야 함 (승격 판단에 씀)
-    # work_dir: 모델 파일을 내려받아 둘 수 있는 저장소 안 폴더 (학습 DAG가 끝나면 지움)
+    # temp_dir: 모델 파일을 내려받아 둘 수 있는 저장소 안 폴더 (학습 DAG가 끝나면 지움)
     image = spec["training"]["image"]
     command = (
         "python3 -c 'import sys; from sources.your_function.training.train import evaluate_model; "

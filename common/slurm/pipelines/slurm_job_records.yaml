@@ -1,0 +1,10 @@
+# 플랫폼 파이프라인 → DAG platform_slurm_job_records
+# 정상 종료한 작업은 작업 스크립트가 종료 상태를 직접 기록함. 기다리지 않고 제출했거나, 취소·시간 초과·노드 재부팅으로
+# 기록하지 못한 작업은 Slurm 작업 기록(common.slurm_jobs)에 끝나지 않은 것으로 남으므로, 15분마다 sacct로 채움
+dag:
+  description: 끝난 Slurm 작업의 종료 상태를 sacct로 채움
+  schedule: "*/15 * * * *"
+
+tasks:
+  update_job_records:
+    operator: record_finished_jobs

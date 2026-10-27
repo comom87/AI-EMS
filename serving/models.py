@@ -11,7 +11,7 @@ from common.model_registry.tracking import download_run_artifacts
 from common.storage.feature_store import connect_feature_store
 
 MODEL_REFRESH_SECONDS = 60
-# 모델 이름 -> 그 모델의 서빙 상태 (spec, predictor, store, lock, champion, prediction, refresh_error)
+# 모델 이름 -> 그 모델의 서빙 상태 (spec, predictor, store, lock, champion, prediction, refresh_error, signal_error)
 serving_models = {}
 # Feast 프로젝트는 플랫폼에 하나라서 모든 모델이 같은 연결을 씀
 store = connect_feature_store()

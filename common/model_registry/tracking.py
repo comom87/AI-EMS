@@ -19,6 +19,21 @@ def fetch_run_id(client, exp_name, run_name):
     return experiment.experiment_id, run.info.run_id
 
 
+def fetch_latest_tagged_run_id(exp_name, tag_key):
+    # tag_key 태그가 붙은 가장 최근 run. 데이터 설명 태그(describe_dataset)는 학습이 성공한 run에만 붙으므로 지난 학습 run을 찾을 때 씀. 없으면 None
+    client = connect_tracking_server()
+    experiment = client.get_experiment_by_name(exp_name)
+    if experiment is None:
+        return None
+    runs = client.search_runs(
+        experiment_ids=[experiment.experiment_id],
+        filter_string=f"tags.`{tag_key}` LIKE '%'",
+        order_by=["attributes.start_time DESC"],
+        max_results=1,
+    )
+    return runs[0].info.run_id if runs else None
+
+
 def fetch_run_tags(run_id):
     return connect_tracking_server().get_run(run_id).data.tags
 

@@ -3,7 +3,7 @@
 from common.config.settings import PROJECT_ROOT
 from common.model_registry.tracking import download_run_artifacts
 from common.slurm.scheduling import fetch_job_key
-from sources.optimal_power_flow.training.data import read_config
+from sources.optimal_power_flow.training.dataset_preparation import read_config
 
 
 def build_split_command(config_path, data_dir):
@@ -59,8 +59,8 @@ def download_run_model(run_id, download_dir):
     return str(download_relative_dir / model_path), str(download_relative_dir / stats_path)
 
 
-def build_evaluate_job(spec, config_path, data_dir, exp_name, run_name, model_run_id, work_dir):
-    model_path, normalizer_stats = download_run_model(model_run_id, work_dir)
+def build_evaluate_job(spec, config_path, data_dir, exp_name, run_name, model_run_id, temp_dir):
+    model_path, normalizer_stats = download_run_model(model_run_id, temp_dir)
     evaluate_command = (
         f"gridfm_graphkit evaluate "
         f"--config {config_path} "

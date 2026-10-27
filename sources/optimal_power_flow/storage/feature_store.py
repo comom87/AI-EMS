@@ -3,7 +3,7 @@
 # 적용: common/storage/feature_store.py의 apply_feature_definitions()
 from feast import FeatureService
 
-from data.kpg193.feature_store import branch_view, bus_view, gen_view
+from data.kpg193.storage.feature_store import branch_view, bus_view, gen_view
 
 BUS_INPUTS = ["Pd", "Qd", "Qg", "Vm", "Va", "PQ", "PV", "REF", "min_vm_pu", "max_vm_pu", "GS", "BS", "vn_kv"]
 GEN_INPUTS = [

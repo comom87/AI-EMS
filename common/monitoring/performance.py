@@ -1,4 +1,4 @@
-# 서빙 성능 점검: champion의 최근 예측 지표를 오프라인 평가값과 비교함 (<모델>_monitoring DAG가 부름). 테이블 정의는 db/model_checks.sql
+# 서빙 성능 점검: champion의 최근 예측 지표를 오프라인 평가값과 비교함 (<모델>_monitoring DAG가 부름). 테이블 정의는 db/model_monitoring.sql
 from datetime import datetime, timezone
 
 import numpy as np

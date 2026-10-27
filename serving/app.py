@@ -1,16 +1,19 @@
 # 모든 모델이 같이 쓰는 서빙 앱. 프로세스 하나가 serving/predictor.py가 있는 모든 기능 폴더(sources/<기능>/)의 모델 champion을 서빙함
 # 실행: python3 -m serving.app  (포트는 .env의 AIEMS_SERVING_PORT)
 # 호출: POST /models/<모델 이름>/predict, GET /models/<모델 이름>, GET /models, GET /health
+# 예측은 외부 시스템이 predict를 부를 때 일어나고, 새 예측을 저장하면 Airflow에 신호를 보내 <모델>_monitoring DAG를 실행함
 # 기능 폴더의 serving/predictor.py가 load_model, fetch_latest_scenario, predict_scenario, calculate_metrics, format_predictions, PREDICTION_TABLES를 가져야 함
 import threading
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
+import requests
 import uvicorn
 from fastapi import FastAPI, HTTPException
 
 from common.config.settings import read_setting
+from common.storage.schemas import apply_model_schema
 from serving.models import list_serving_model_names, load_serving_model, refresh_champion_models, serving_models
 from serving.predictions import (
     connect_prediction_db,
@@ -18,13 +21,16 @@ from serving.predictions import (
     record_prediction_request,
     record_predictions,
 )
+from serving.signals import send_predictions_signal
 
 engine = connect_prediction_db()
 
 
 @asynccontextmanager
 async def start_serving(app):
+    # 예측을 저장할 표(sources/<기능>/storage/schema.sql)를 먼저 만들고 모델을 불러옴
     for name in list_serving_model_names():
+        apply_model_schema(name)
         serving_models[name] = load_serving_model(name)
     threading.Thread(target=refresh_champion_models, daemon=True).start()
     yield
@@ -42,6 +48,15 @@ def fetch_serving_model(name):
     return model
 
 
+def notify_monitoring(name, model):
+    # 신호가 실패해도 예측 응답은 그대로 돌려주고, 실패는 /health의 signal_error로 보여줌
+    try:
+        send_predictions_signal(name)
+        model.pop("signal_error", None)
+    except requests.RequestException as error:
+        model["signal_error"] = repr(error)
+
+
 def create_prediction(name, model, champion, scenario):
     predictor = model["predictor"]
     saved = fetch_saved_prediction(engine, name, predictor.PREDICTION_TABLES, scenario, champion["version"])
@@ -49,6 +64,7 @@ def create_prediction(name, model, champion, scenario):
         predictions = predictor.predict_scenario(champion["model"], model["store"], scenario)
         metrics = predictor.calculate_metrics(predictions)
         predicted_at = record_predictions(engine, name, predictions, scenario, champion["version"], metrics)
+        notify_monitoring(name, model)
     else:
         predictions, predicted_at = saved
     return {
@@ -95,7 +111,11 @@ def check_health():
     return {
         "status": "ok",
         "models": {
-            name: {"model_loaded": "champion" in model, "refresh_error": model.get("refresh_error")}
+            name: {
+                "model_loaded": "champion" in model,
+                "refresh_error": model.get("refresh_error"),
+                "signal_error": model.get("signal_error"),
+            }
             for name, model in serving_models.items()
         },
     }

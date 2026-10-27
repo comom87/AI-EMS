@@ -1,4 +1,4 @@
-# [학습 컨테이너] 학습·평가 명령(training/jobs.py의 build_split_command)이 graphkit 실행 전에 부름
+# [학습 컨테이너] 학습·평가 명령(training/model_train.py의 build_split_command)이 graphkit 실행 전에 부름
 import pandas as pd
 import torch
 import yaml

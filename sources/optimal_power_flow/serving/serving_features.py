@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 
 from common.config.settings import DATABASE_URL
-from sources.optimal_power_flow.feature_store import fetch_input_service_name
+from sources.optimal_power_flow.storage.feature_store import fetch_input_service_name
 
 
 def fetch_topology_sizes(source):
@@ -28,7 +28,7 @@ def fetch_latest_scenario(store, source):
 
 
 def fetch_input_table(store, source, table, entity_rows):
-    # 이 기능의 피처 묶음(sources/optimal_power_flow/feature_store.py)으로 표 하나를 Redis에서 읽음
+    # 이 기능의 피처 묶음(sources/optimal_power_flow/storage/feature_store.py)으로 표 하나를 Redis에서 읽음
     service = store.get_feature_service(fetch_input_service_name(source, table))
     return store.get_online_features(features=service, entity_rows=entity_rows).to_df()
 
