@@ -857,7 +857,7 @@
         "overrides": []
       },
       "options": {},
-      "description": "최근 96개 시나리오의 버스별 부하 중 champion 학습 데이터 범위를 벗어난 값의 비율입니다. 재학습 기준은 1%이고, 넘으면 자동 재학습이 걸립니다."
+      "description": "최근 288개 시나리오(5분 간격 데이터 하루치)의 버스별 부하 중 champion 학습 데이터 범위를 벗어난 값의 비율입니다. 재학습 기준은 1%이고, 넘으면 자동 재학습이 걸립니다."
     },
     {
       "id": 19,
@@ -1025,7 +1025,7 @@
           ]
         }
       },
-      "description": "최근 96개 시나리오와 champion 학습 데이터의 분포 차이(PSI)입니다. 참고용 지표로, 0.25 이상이면 분포가 크게 달라졌다는 뜻입니다. 재학습 판단에는 쓰지 않습니다. 총 유효부하·총 무효부하·버스별 부하는 함께 움직여서 선이 겹칠 수 있으니 오른쪽 표의 값을 함께 보세요."
+      "description": "최근 288개 시나리오(5분 간격 데이터 하루치)와 champion 학습 데이터의 분포 차이(PSI)입니다. 참고용 지표로, 0.25 이상이면 분포가 크게 달라졌다는 뜻입니다. 재학습 판단에는 쓰지 않습니다. 총 유효부하·총 무효부하·버스별 부하는 함께 움직여서 선이 겹칠 수 있으니 오른쪽 표의 값을 함께 보세요."
     },
     {
       "id": 20,
@@ -1511,7 +1511,7 @@
         ]
       },
       "options": {},
-      "description": "champion의 최근 예측 96개(15분 간격 데이터 하루치)를 합친 발전량 RMSE를 재학습 조건선과 비교합니다. 재학습 조건선은 champion의 오프라인 평가 RMSE의 1.2배이고, 최근 하루 RMSE가 이 선을 넘으면 재학습을 요청합니다. 점선은 champion의 오프라인 평가 RMSE 원래 값으로, 판정에는 쓰지 않는 참고선입니다. champion의 예측이 96개 쌓이기 전에는 점검하지 않습니다."
+      "description": "champion의 최근 예측 288개(5분 간격 데이터 하루치)를 합친 발전량 RMSE를 재학습 조건선과 비교합니다. 재학습 조건선은 champion의 오프라인 평가 RMSE의 1.2배이고, 최근 하루 RMSE가 이 선을 넘으면 재학습을 요청합니다. 점선은 champion의 오프라인 평가 RMSE 원래 값으로, 판정에는 쓰지 않는 참고선입니다. champion의 예측이 96개 쌓이기 전에는 점검하지 않습니다."
     },
     {
       "id": 30,
@@ -1799,7 +1799,7 @@
     },
     {
       "id": 38,
-      "title": "15분당 예측 요청 수",
+      "title": "5분당 예측 요청 수",
       "type": "timeseries",
       "datasource": {
         "type": "grafana-postgresql-datasource",
@@ -1821,7 +1821,7 @@
           "rawQuery": true,
           "editorMode": "code",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(requested_at, '15m'), COUNT(*) AS \"요청\"\nFROM optimal_power_flow.prediction_requests WHERE $__timeFilter(requested_at) GROUP BY 1 ORDER BY 1"
+          "rawSql": "SELECT $__timeGroupAlias(requested_at, '5m'), COUNT(*) AS \"요청\"\nFROM optimal_power_flow.prediction_requests WHERE $__timeFilter(requested_at) GROUP BY 1 ORDER BY 1"
         }
       ],
       "fieldConfig": {

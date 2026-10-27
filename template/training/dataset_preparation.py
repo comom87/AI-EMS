@@ -1,17 +1,26 @@
 # [Airflow] 학습 데이터 준비: 학습 DAG(<모델 이름>_training)가 학습 전에 차례로 부름
 # 내용은 모델마다 자유롭게 쓰고, 함수 이름과 인자만 지킴. Airflow 안에서 import되므로 torch를 import하지 않음
-# spec: models/model.yaml 내용 (spec["data_source"], spec["training"]["data_dir"] 등)
+# spec: {name: <모델 이름>, function: <기능 폴더 이름>, kind: model}
+
+# 이 모델 전체가 같이 쓰는 값. 학습·서빙·분포 점검 코드가 여기서 import함 (모델 설정 파일은 따로 없음)
+# 구독하는 데이터 소스 (data/<소스>/)
+DATA_SOURCE = "kpg193"
+# 학습 데이터를 내보내는 폴더. data/<데이터 소스>/files/ 아래 이 모델 폴더 (git 제외)
+# 학습 파이프라인(pipelines/training.yaml) params.data_dir의 기본값과 같게 둠
+DATA_DIR = "data/kpg193/files/your_function"
+# 기본 학습 설정. 학습 파이프라인 params.config_path의 기본값과 같게 둠
+TRAINING_CONFIG = "sources/your_function/models/configs/train.yaml"
 
 
 def export_dataset(spec):
-    # 학습 DAG 첫 단계. 데이터 소스의 DB 표(<소스>.<표>)를 읽어 전처리하고 spec["training"]["data_dir"]에 저장
+    # 학습 DAG 첫 단계. 데이터 소스의 DB 표(<DATA_SOURCE>.<표>)를 읽어 전처리하고 DATA_DIR에 저장
     # 저장 위치는 data/<소스>/files/ 아래로 함 (git에서 빠짐). 다른 모델과 폴더가 겹치지 않게 모델 이름 폴더를 씀
     raise NotImplementedError
 
 
 def validate_dataset(spec, config_path, data_dir):
     # export_dataset 다음. 학습에 쓸 데이터를 검사하고, 문제가 있으면 예외를 냄 (Slurm 학습 전에 DAG가 멈춤)
-    # data_dir은 학습 DAG 실행 때 바꿀 수 있음 (기본값은 spec["training"]["data_dir"])
+    # data_dir은 학습 DAG 실행 때 바꿀 수 있음 (기본값은 DATA_DIR)
     raise NotImplementedError
 
 

@@ -11,12 +11,12 @@ from common.monitoring.retraining import record_retraining_request
 from dags.dag_settings import fetch_pipeline_dag_id
 
 
-def check_performance(spec, context):
-    return check_model_performance(spec)
+def check_performance(spec, context, metric_column, aggregation, window, tolerance):
+    return check_model_performance(spec["name"], metric_column, aggregation, window, tolerance)
 
 
-def check_drift(spec, context):
-    return check_data_drift(spec)
+def check_drift(spec, context, window, psi_threshold, out_of_range_threshold):
+    return check_data_drift(spec, window, psi_threshold, out_of_range_threshold)
 
 
 def check_training_availability(training_dag_id, cooldown_days):
@@ -30,17 +30,19 @@ def check_training_availability(training_dag_id, cooldown_days):
     return True
 
 
-def request_retraining(spec, context, pipeline="training", performance_task="check_performance", drift_task="check_drift"):
-    # 성능 저하나 재학습 대상 분포 변화가 있고, 학습 파이프라인이 쉬는 중이며 cooldown_days가 지났으면 True (뒤 단계가 실행됨)
+def request_retraining(
+    spec, context, retrain_on, cooldown_days, pipeline="training", performance_task="check_performance", drift_task="check_drift"
+):
+    # 성능 저하나 retrain_on에 든 분포 판정이 있고, 학습 파이프라인이 쉬는 중이며 마지막 학습 뒤 cooldown_days가 지났으면 True (뒤 단계가 실행됨)
     ti = context["ti"]
     reasons = []
     if ti.xcom_pull(task_ids=performance_task):
         reasons.append("performance_degradation")
     drift_status = ti.xcom_pull(task_ids=drift_task)
-    if drift_status in spec["drift"]["retrain_on"]:
+    if drift_status in retrain_on:
         reasons.append(drift_status)
     training_dag_id = fetch_pipeline_dag_id(spec["name"], pipeline)
-    if not reasons or not check_training_availability(training_dag_id, spec["training"]["cooldown_days"]):
+    if not reasons or not check_training_availability(training_dag_id, cooldown_days):
         return False
     record_retraining_request(spec["name"], reasons)
     return True

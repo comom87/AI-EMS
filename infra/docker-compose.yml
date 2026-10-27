@@ -71,6 +71,8 @@ services:
       AIRFLOW__CORE__DAGS_FOLDER: ${AIEMS_PROJECT_ROOT}/dags
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIEMS_AIRFLOW_DATABASE_URL}
       AIRFLOW__WEBSERVER__WEB_SERVER_PORT: ${AIEMS_AIRFLOW_PORT}
+      # DAG 진입점(dags/pipeline_dags.py)을 다시 읽는 주기(초). 새 기능 폴더와 바뀐 파이프라인 YAML은 이 주기 안에 반영됨
+      AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: "300"
       # 서빙 앱이 REST API(dataset 이벤트)로 예측 신호를 보내므로 계정·비밀번호 인증을 켬 (계정은 .env의 AIEMS_AIRFLOW_API_USER)
       AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
       # 기본 로그 포트(8793, 8794)는 opengridfm-mlops의 Airflow가 쓰고 있어서 피함

@@ -1,4 +1,4 @@
-# 최적 조류(OPF) 예측 기능이 서빙 때 쓰는 피처 묶음 (Feast FeatureService)
+# [Feast] 최적 조류(OPF) 예측 기능이 서빙 때 쓰는 피처 묶음 (Feast FeatureService)
 # 표마다 행을 가리키는 열이 달라서(모선 bus, 발전기·선로 idx) 표마다 묶음을 하나씩 둠
 # 적용: common/storage/feature_store.py의 apply_feature_definitions()
 from feast import FeatureService

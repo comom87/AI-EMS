@@ -5,6 +5,9 @@ from common.model_registry.tracking import download_run_artifacts
 from common.slurm.scheduling import fetch_job_key
 from sources.optimal_power_flow.training.dataset_preparation import read_config
 
+# 학습·평가를 실행할 Docker 이미지 (태그 latest). Slurm 작업이 시작할 때 SIF로 바꿔 씀. 제출 도구(common/slurm/submit_script.py)도 이 값을 씀
+TRAINING_IMAGE = "aiems-graphkit"
+
 
 def build_split_command(config_path, data_dir):
     return (
@@ -26,11 +29,10 @@ def build_graphkit_job(spec, config_path, data_dir, exp_name, run_name, graphkit
     commands = [graphkit_command, build_publish_command(exp_name, run_name)]
     if "split_from_existing_files" in config["data"]:
         commands.insert(0, build_split_command(config_path, data_dir))
-    image = spec["training"]["image"]
     return {
-        "image": image,
+        "image": TRAINING_IMAGE,
         "command": f'bash -c "{" && ".join(commands)}"',
-        "job_key": fetch_job_key(image, job_key_command),
+        "job_key": fetch_job_key(TRAINING_IMAGE, job_key_command),
         "cpus_per_task": config["data"]["workers"],
     }
 

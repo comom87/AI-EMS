@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS common.model_performance_checks (
     model_name text NOT NULL,
     checked_at timestamptz NOT NULL,
     model_version integer NOT NULL,
-    metric_name text NOT NULL,              -- 본 지표 이름 (model.yaml monitoring.metric_column, 예: pg_rmse_mw)
+    metric_name text NOT NULL,              -- 본 지표 이름 (점검 파이프라인 check_performance의 metric_column, 예: pg_rmse_mw)
     recent_value double precision NOT NULL, -- 최근 window건을 aggregation으로 합친 값
     offline_baseline double precision NOT NULL,
     degraded boolean NOT NULL

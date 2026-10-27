@@ -13,8 +13,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 
 from common.config.settings import read_setting
-from common.storage.schemas import apply_model_schema
-from serving.models import list_serving_model_names, load_serving_model, refresh_champion_models, serving_models
+from serving.models import add_new_models, model_load_errors, refresh_champion_models, serving_models
 from serving.predictions import (
     connect_prediction_db,
     fetch_saved_prediction,
@@ -28,10 +27,8 @@ engine = connect_prediction_db()
 
 @asynccontextmanager
 async def start_serving(app):
-    # 예측을 저장할 표(sources/<기능>/storage/schema.sql)를 먼저 만들고 모델을 불러옴
-    for name in list_serving_model_names():
-        apply_model_schema(name)
-        serving_models[name] = load_serving_model(name)
+    # 지금 있는 기능 폴더의 모델을 불러오고, 그 뒤로는 1분마다 새 기능 폴더와 바뀐 champion을 반영함
+    add_new_models()
     threading.Thread(target=refresh_champion_models, daemon=True).start()
     yield
 
@@ -103,7 +100,7 @@ def describe_model(name: str):
 
 @app.get("/models")
 def list_models():
-    return sorted(serving_models)
+    return sorted(list(serving_models))
 
 
 @app.get("/health")
@@ -116,8 +113,9 @@ def check_health():
                 "refresh_error": model.get("refresh_error"),
                 "signal_error": model.get("signal_error"),
             }
-            for name, model in serving_models.items()
+            for name, model in list(serving_models.items())
         },
+        "load_errors": dict(model_load_errors),
     }
 
 

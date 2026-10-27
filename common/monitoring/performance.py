@@ -20,10 +20,11 @@ def aggregate_metric(values, aggregation):
 
 
 def fetch_offline_baseline(model_name, version):
-    # champion을 승격할 때 쓴 평가 run의 지표 (validate_candidate_model이 남긴 태그로 찾음)
+    # champion을 승격할 때 쓴 평가 run의 지표와 그 지표가 낮을수록 좋은지 (validate_candidate_model이 남긴 태그로 찾음)
     client = connect_tracking_server()
     tags = client.get_model_version(model_name, version).tags
-    return client.get_run(tags["validation.eval_run_id"]).data.metrics[tags["validation.metric"]]
+    baseline = client.get_run(tags["validation.eval_run_id"]).data.metrics[tags["validation.metric"]]
+    return baseline, tags["validation.lower_is_better"] == "true"
 
 
 def record_performance_check(model_name, model_version, metric_name, recent_value, offline_baseline, degraded):
@@ -40,31 +41,29 @@ def record_performance_check(model_name, model_version, metric_name, recent_valu
     ).to_sql("model_performance_checks", create_engine(DATABASE_URL), schema="common", if_exists="append", index=False)
 
 
-def check_model_performance(spec):
-    # champion의 최근 window건 예측 지표가 오프라인 평가값보다 tolerance 넘게 나쁘면 True. 기록이 모자라면 False
-    model_name = spec["name"]
-    monitoring = spec["monitoring"]
+def check_model_performance(model_name, metric_column, aggregation, window, tolerance):
+    # champion의 최근 window건 예측 지표(metric_column)를 aggregation으로 합쳐 오프라인 평가값보다 tolerance 넘게 나쁘면 True. 기록이 모자라면 False
     champion = fetch_champion_version(model_name)
     if champion is None:
         return False
     version, _ = champion
     values = pd.read_sql(
         text(
-            f"SELECT {monitoring['metric_column']} FROM {model_name}.prediction_metrics "
+            f"SELECT {metric_column} FROM {model_name}.prediction_metrics "
             "WHERE model_version = :version ORDER BY predicted_at DESC LIMIT :window"
         ),
         create_engine(DATABASE_URL),
-        params={"version": int(version), "window": monitoring["window"]},
+        params={"version": int(version), "window": window},
     ).iloc[:, 0]
-    if len(values) < monitoring["window"]:
+    if len(values) < window:
         return False
 
-    recent_value = aggregate_metric(values, monitoring["aggregation"])
-    offline_baseline = fetch_offline_baseline(model_name, version)
-    if spec["evaluation"]["lower_is_better"]:
-        degraded = recent_value > offline_baseline * (1 + monitoring["tolerance"])
+    recent_value = aggregate_metric(values, aggregation)
+    offline_baseline, lower_is_better = fetch_offline_baseline(model_name, version)
+    if lower_is_better:
+        degraded = recent_value > offline_baseline * (1 + tolerance)
     else:
-        degraded = recent_value < offline_baseline * (1 - monitoring["tolerance"])
-    record_performance_check(model_name, version, monitoring["metric_column"], recent_value, offline_baseline, degraded)
+        degraded = recent_value < offline_baseline * (1 - tolerance)
+    record_performance_check(model_name, version, metric_column, recent_value, offline_baseline, degraded)
     return degraded
 

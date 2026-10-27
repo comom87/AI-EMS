@@ -1,5 +1,5 @@
--- 모델 <모델 이름> 전용 스키마. 서빙 앱이 시작할 때마다 적용합니다. 여러 번 실행해도 안전하게 씁니다.
--- <모델 이름>을 model.yaml의 name으로 모두 바꿉니다.
+-- 모델 <모델 이름> 전용 스키마. 서빙 앱이 이 모델을 불러올 때 적용합니다. 여러 번 실행해도 안전하게 씁니다.
+-- <모델 이름>을 기능 폴더 이름(= 모델 이름)으로 모두 바꿉니다.
 -- prediction_requests와 prediction_metrics는 공용 서빙 앱(serving/)이 쓰므로 기본 열을 그대로 둡니다.
 
 CREATE SCHEMA IF NOT EXISTS <모델 이름>;
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS <모델 이름>.prediction_requests (
 CREATE INDEX IF NOT EXISTS prediction_requests_time ON <모델 이름>.prediction_requests (requested_at);
 
 -- 시나리오 1개 예측의 요약 지표. 앞의 세 열은 그대로 두고, 그 뒤에 serving/predictor.py의 calculate_metrics가 돌려주는 지표를 열로 추가
--- 성능 점검은 model.yaml monitoring.metric_column 열을 읽음
+-- 성능 점검은 점검 파이프라인(pipelines/monitoring.yaml) check_performance의 metric_column 열을 읽음
 CREATE TABLE IF NOT EXISTS <모델 이름>.prediction_metrics (
     scenario bigint NOT NULL,
     model_version integer NOT NULL,

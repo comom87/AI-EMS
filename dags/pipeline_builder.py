@@ -70,7 +70,7 @@ def validate_pipeline(spec, pipeline, label):
 
 
 def render_params(spec, params):
-    # params 기본값에는 모델 명세를 쓸 수 있음 (예: "{{ spec.training.config }}"). DAG를 만들 때 한 번 풂
+    # params 기본값에는 spec을 쓸 수 있음 (예: "{{ spec.name }}"). DAG를 만들 때 한 번 풂
     return {
         name: jinja2.Template(value).render(spec=spec) if isinstance(value, str) else value
         for name, value in (params or {}).items()
@@ -134,9 +134,9 @@ def build_pipeline_dag(spec, path):
         max_active_runs=1,
         # 템플릿을 푼 값이 문자열로 바뀌지 않게 함 (앞 단계가 돌려준 None·숫자를 그대로 받음)
         render_template_as_native_obj=True,
-        # owner: Airflow 화면의 Owner 칸. 모델은 따로 적지 않으면 model.yaml의 owner
+        # owner: Airflow 화면의 Owner 칸 (담당자)
         default_args={
-            "owner": settings.get("owner", spec.get("owner", "airflow")),
+            "owner": settings.get("owner", "airflow"),
             "retries": settings.get("retries", 0),
             "retry_delay": RETRY_DELAY,
         },

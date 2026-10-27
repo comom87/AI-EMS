@@ -9,6 +9,6 @@ def fit_model(config_path, data_dir, exp_name, run_name):
 
 
 def evaluate_model(config_path, data_dir, exp_name, run_name, model_run_id):
-    # model_run_id의 모델 파일을 내려받아 시험 데이터로 평가하고, run 이름 run_name으로 run을 만들어 evaluation.metric 지표를 기록함
+    # model_run_id의 모델 파일을 내려받아 시험 데이터로 평가하고, run 이름 run_name으로 run을 만들어 학습 파이프라인 validate_model의 metric 지표를 기록함
     # 후보와 champion을 같은 시험 데이터로 평가하도록, 시험 데이터 고르는 방법은 데이터가 늘어나도 바뀌지 않게 함
     raise NotImplementedError

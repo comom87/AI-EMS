@@ -1,19 +1,31 @@
 # 점검 파이프라인 → DAG <모델 이름>_monitoring
-# 서빙 앱이 새 예측을 저장할 때마다(Airflow에 신호를 보냄) 성능과 입력 분포를 점검하고, 필요하면 학습 파이프라인을 실행함 (cooldown_days 안에는 다시 실행하지 않음)
+# 서빙 앱이 새 예측을 저장할 때마다(Airflow에 신호를 보냄) 성능과 입력 분포를 점검하고, 필요하면 학습 파이프라인을 실행함 (마지막 학습 뒤 cooldown_days 안에는 다시 실행하지 않음)
 dag:
   description: 예측마다 성능·분포 점검, 필요하면 재학습
+  owner: your_github_account                            # 담당자 (Airflow 화면의 Owner 칸)
   schedule: predictions
 
 tasks:
   check_performance:
     operator: check_performance
+    args:
+      metric_column: your_metric               # <모델>.prediction_metrics의 열 (serving/predictor.py의 calculate_metrics가 돌려줌)
+      aggregation: pooled_rmse               # 최근 기록을 합치는 방법: pooled_rmse 또는 mean
+      window: 288                            # 최근 몇 건으로 볼지 (5분 주기로 하루치)
+      tolerance: 0.2                         # 오프라인 평가값보다 이 비율 넘게 나쁘면 성능 저하
 
   check_drift:
     operator: check_drift
+    args:
+      window: 288                            # 최근 몇 건의 입력을 champion 학습 데이터와 비교할지
+      psi_threshold: 0.25                    # PSI가 이 값 이상이면 shifted
+      out_of_range_threshold: 0.01           # 학습 범위 밖 값의 비율이 이보다 크면 out_of_range
 
   request_retraining:
     operator: request_retraining
     args:
+      retrain_on: [out_of_range]             # 재학습을 요청할 분포 판정 (out_of_range, shifted). 성능 저하는 늘 요청
+      cooldown_days: 7                       # 마지막 학습 뒤 이 기간 안에는 다시 요청하지 않음
       pipeline: training
     dependencies: [check_performance, check_drift]
 

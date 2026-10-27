@@ -25,10 +25,8 @@ def register_model(client, model_name, run_id):
     return client.create_model_version(model_name, source=f"runs:/{run_id}", run_id=run_id).version
 
 
-def validate_candidate_model(spec, run_name, champion_version, champion_failed):
-    # 학습 run(run_name)을 모델 버전으로 등록하고, 같은 시험 데이터로 평가한 champion보다 나으면 champion으로 승격
-    model_name = spec["name"]
-    metric = spec["evaluation"]["metric"]
+def validate_candidate_model(model_name, run_name, champion_version, champion_failed, metric, lower_is_better):
+    # 학습 run(run_name)을 모델 버전으로 등록하고, 같은 시험 데이터로 평가한 champion보다 metric이 나으면 champion으로 승격
     client = connect_tracking_server()
     _, train_run_id = fetch_run_id(client, model_name, run_name)
     _, eval_run_id = fetch_run_id(client, model_name, f"{run_name}_eval")
@@ -42,7 +40,7 @@ def validate_candidate_model(spec, run_name, champion_version, champion_failed):
             metric,
             client.get_run(eval_run_id).data.metrics[metric],
             client.get_run(champion_eval_run_id).data.metrics[metric],
-            spec["evaluation"]["lower_is_better"],
+            lower_is_better,
         )
     promoted = not failures
 
@@ -52,6 +50,8 @@ def validate_candidate_model(spec, run_name, champion_version, champion_failed):
     client.set_model_version_tag(model_name, version, "validation.compared_champion_version", champion_version or "none")
     client.set_model_version_tag(model_name, version, "validation.eval_run_id", eval_run_id)
     client.set_model_version_tag(model_name, version, "validation.metric", metric)
+    # 점검 DAG가 이 버전의 성능 저하를 판단할 때 지표 방향으로 씀
+    client.set_model_version_tag(model_name, version, "validation.lower_is_better", str(lower_is_better).lower())
     client.set_tag(train_run_id, "aiems.model_version", version)
     client.set_tag(train_run_id, "aiems.promoted", str(promoted).lower())
     if promoted:

@@ -1,5 +1,5 @@
 # 파이프라인 YAML의 operator: 이름마다 플랫폼이 제공하는 단계 하나. dags/pipeline_builder.py가 Airflow 작업으로 감쌈
-# 모든 단계는 (spec, context, **args)를 받음. spec: 모델 명세(model.yaml), 데이터 소스({name: <소스>}), 또는 플랫폼({name: platform}),
+# 모든 단계는 (spec, context, **args)를 받음. spec: 모델({name: <모델>, function: <기능 폴더>, kind: model}), 데이터 소스({name: <소스>}), 또는 플랫폼({name: platform}),
 # context: Airflow 실행 정보(dag_run, ti, params), args: YAML의 args (Airflow 템플릿이 먼저 풀림)
 # 단계 함수는 쓰이는 곳별 파일에 있고, 여기에는 YAML 이름 → 함수 목록만 둠. 새 operator는 알맞은 파일에 함수를 만들고 여기에 이름을 올림
 from dags.operators.features import apply_changed_features, materialize_features

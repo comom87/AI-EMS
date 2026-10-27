@@ -1,5 +1,4 @@
 # [서빙] 공용 서빙 앱(serving/app.py)이 부르는 최적 조류 예측 모델의 함수들. 서빙 이미지 안에서만 import됨 (torch 사용)
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -10,16 +9,14 @@ from gridfm_graphkit.io.config_version import resolve_config
 from gridfm_graphkit.io.param_handler import NestedNamespace, get_task, get_task_transforms, load_normalizer
 from torch_geometric.data import Batch
 
-from common.config.model_specs import load_function_model_spec
 from sources.optimal_power_flow.serving import serving_features
+from sources.optimal_power_flow.training.dataset_preparation import DATA_SOURCE
 
 PREDICTION_COLUMN_NAMES = {
     "active res. (MW)": "active_res_mw",
     "reactive res. (MVar)": "reactive_res_mvar",
     "PBE": "pbe_mva",
 }
-# 이 모델이 구독하는 데이터 소스 (기능 폴더 models/model.yaml의 data_source)
-DATA_SOURCE = load_function_model_spec(Path(__file__).parents[1].name)["data_source"]
 # 예측 결과를 저장하는 이 모델 스키마의 테이블과 정렬 열 (기능 폴더의 storage/schema.sql)
 PREDICTION_TABLES = {"bus_predictions": "bus", "gen_predictions": "idx"}
 
@@ -63,7 +60,7 @@ def predict_scenario(model, store, scenario):
 
 
 def calculate_metrics(predictions):
-    # prediction_metrics 테이블에 들어갈 요약 지표. pg_rmse_mw는 model.yaml monitoring.metric_column
+    # prediction_metrics 테이블에 들어갈 요약 지표. pg_rmse_mw는 점검 파이프라인 check_performance의 metric_column
     bus, gen = predictions["bus_predictions"], predictions["gen_predictions"]
     return {
         "pg_rmse_mw": float(np.sqrt(np.mean(np.square(gen["p_mw_pred"] - gen["p_mw_target"])))),

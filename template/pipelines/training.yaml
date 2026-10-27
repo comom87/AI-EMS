@@ -4,10 +4,11 @@
 # operator 목록: dags/operators/. args에는 Airflow 템플릿을 씀 ({{ params.data_dir }} 등)
 dag:
   description: 데이터 준비 → Slurm 학습·평가 → champion과 비교 → 등록·승격
+  owner: your_github_account                            # 담당자 (Airflow 화면의 Owner 칸)
   schedule: "@monthly"                       # cron·프리셋, predictions(서빙 앱이 새 예측을 저장할 때마다)
-  params:                                    # 실행할 때 바꿀 수 있는 값. 기본값에 모델 명세를 쓸 수 있음
-    config_path: "{{ spec.training.config }}"
-    data_dir: "{{ spec.training.data_dir }}"  # 다른 폴더를 주면 그 데이터를 그대로 학습
+  params:                                    # 실행할 때 바꿀 수 있는 값
+    config_path: sources/your_function/models/configs/train.yaml   # training/dataset_preparation.py의 TRAINING_CONFIG와 같게 둠
+    data_dir: data/kpg193/files/your_function  # training/dataset_preparation.py의 DATA_DIR와 같게 둠. 다른 폴더를 주면 그 데이터를 그대로 학습
 
 tasks:
   export_dataset:
@@ -27,6 +28,7 @@ tasks:
     operator: measure_new_data_drift
     args:
       data_dir: "{{ params.data_dir }}"
+      psi_threshold: 0.25                    # 모선별 부하 PSI가 이 값 이상인 모선을 shifted_bus_count로 셈
     dependencies: [validate_dataset]
 
   train_model:
@@ -63,6 +65,8 @@ tasks:
     operator: record_champion_data_drift
     args:
       data_dir: "{{ params.data_dir }}"
+      psi_threshold: 0.25                    # PSI가 이 값 이상이면 shifted
+      out_of_range_threshold: 0.01           # 학습 범위 밖 값의 비율이 이보다 크면 out_of_range
     dependencies: [train_model]
 
   delete_run_files:
@@ -73,4 +77,7 @@ tasks:
   validate_model:
     operator: register_model
     trigger_rule: all_done
+    args:
+      metric: test/your_metric   # 평가 run의 이 지표로 champion과 비교. 점검 DAG의 성능 기준선도 이 지표
+      lower_is_better: true                  # 작을수록 좋으면 true (오차), 클수록 좋으면 false (정확도)
     dependencies: [delete_run_files]

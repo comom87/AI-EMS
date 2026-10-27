@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS optimal_power_flow.prediction_requests (
 );
 CREATE INDEX IF NOT EXISTS prediction_requests_time ON optimal_power_flow.prediction_requests (requested_at);
 
--- 시나리오 1개 예측의 요약 지표. 성능 점검은 model.yaml monitoring.metric_column(pg_rmse_mw)을 읽음
+-- 시나리오 1개 예측의 요약 지표. 성능 점검은 점검 파이프라인 check_performance의 metric_column(pg_rmse_mw)을 읽음
 CREATE TABLE IF NOT EXISTS optimal_power_flow.prediction_metrics (
     scenario bigint NOT NULL,
     model_version integer NOT NULL,

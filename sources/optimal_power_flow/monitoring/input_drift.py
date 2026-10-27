@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, text
 from common.monitoring.drift import compute_psi
 from common.config.settings import DATABASE_URL, PROJECT_ROOT
 from common.model_registry.tracking import fetch_latest_tagged_run_id, fetch_run_tags
-from sources.optimal_power_flow.training.dataset_preparation import fetch_network_name
+from sources.optimal_power_flow.training.dataset_preparation import DATA_DIR, DATA_SOURCE, fetch_network_name
 
 
 def read_dataset_inputs(data_dir, network):
@@ -65,37 +65,36 @@ def compare_input_distributions(reference, current, psi_threshold):
 def read_training_inputs(spec, run_id):
     # champion 학습 run의 태그(describe_dataset)로 그 run이 학습한 입력을 다시 읽음. 실시간 데이터로 학습했으면 학습한 시나리오 수도 돌려줌
     tags = fetch_run_tags(run_id)
-    data_dir = tags[f"{spec['data_source']}.data_dir"]
-    if data_dir == spec["training"]["data_dir"]:
-        trained_count = int(tags[f"{spec['data_source']}.{fetch_network_name(spec)}.scenario_count"])
-        return read_realtime_inputs(spec["data_source"], 0, trained_count), trained_count
-    return read_dataset_inputs(data_dir, fetch_network_name(spec)), 0
+    data_dir = tags[f"{DATA_SOURCE}.data_dir"]
+    if data_dir == DATA_DIR:
+        trained_count = int(tags[f"{DATA_SOURCE}.{fetch_network_name()}.scenario_count"])
+        return read_realtime_inputs(DATA_SOURCE, 0, trained_count), trained_count
+    return read_dataset_inputs(data_dir, fetch_network_name()), 0
 
 
-def measure_recent_drift(spec, champion_run_id):
-    # 학습 뒤에 들어온 최근 drift.window개 시나리오를 champion 학습 입력과 비교. 아직 모자라면 None
+def measure_recent_drift(spec, champion_run_id, window, psi_threshold):
+    # 학습 뒤에 들어온 최근 window개 시나리오를 champion 학습 입력과 비교. 아직 모자라면 None
     reference, trained_count = read_training_inputs(spec, champion_run_id)
-    window = spec["drift"]["window"]
-    total_count = fetch_realtime_scenario_count(spec["data_source"])
+    total_count = fetch_realtime_scenario_count(DATA_SOURCE)
     first_scenario = max(trained_count, total_count - window)
     if total_count - first_scenario < window:
         return None
-    current = read_realtime_inputs(spec["data_source"], first_scenario, total_count)
-    return first_scenario, total_count - 1, compare_input_distributions(reference, current, spec["drift"]["psi_threshold"])
+    current = read_realtime_inputs(DATA_SOURCE, first_scenario, total_count)
+    return first_scenario, total_count - 1, compare_input_distributions(reference, current, psi_threshold)
 
 
-def measure_champion_data_drift(spec, champion_run_id, data_dir):
+def measure_champion_data_drift(spec, champion_run_id, data_dir, psi_threshold):
     # 후보 모델의 학습 데이터(data_dir)를 운영 모델(champion)의 학습 입력과 비교
     reference, _ = read_training_inputs(spec, champion_run_id)
-    current = read_dataset_inputs(data_dir, fetch_network_name(spec))
-    return compare_input_distributions(reference, current, spec["drift"]["psi_threshold"])
+    current = read_dataset_inputs(data_dir, fetch_network_name())
+    return compare_input_distributions(reference, current, psi_threshold)
 
 
-def measure_new_data_drift(spec, data_dir):
+def measure_new_data_drift(spec, data_dir, psi_threshold):
     # 이번 학습 데이터(data_dir) 가운데 지난 학습 뒤 새로 들어온 시나리오를 그 전 시나리오와 비교.
     # 지난 학습이 없거나, 다른 폴더로 학습했거나, 새 시나리오가 없으면 None
-    prefix = spec["data_source"]
-    network = fetch_network_name(spec)
+    prefix = DATA_SOURCE
+    network = fetch_network_name()
     previous_run_id = fetch_latest_tagged_run_id(spec["name"], f"{prefix}.data_dir")
     if previous_run_id is None:
         return None
@@ -108,4 +107,4 @@ def measure_new_data_drift(spec, data_dir):
         return None
     reference = tuple(table[table["scenario"] < previous_count] for table in tables)
     current = tuple(table[table["scenario"] >= previous_count] for table in tables)
-    return compare_input_distributions(reference, current, spec["drift"]["psi_threshold"])
+    return compare_input_distributions(reference, current, psi_threshold)
